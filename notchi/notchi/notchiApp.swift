@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct notchiApp: App {
+struct notchiRemixApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {

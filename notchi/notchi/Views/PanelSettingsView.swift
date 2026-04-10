@@ -2,6 +2,7 @@ import ServiceManagement
 import SwiftUI
 
 struct PanelSettingsView: View {
+    var onOpenClaudeSettings: (() -> Void)? = nil
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State private var hooksInstalled = HookInstaller.isInstalled()
     @State private var hooksError = false
@@ -128,6 +129,15 @@ struct PanelSettingsView: View {
 
     private var actionsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
+            Button(action: { onOpenClaudeSettings?() }) {
+                SettingsRowView(icon: "doc.text.magnifyingglass", title: "Claude Code Settings") {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 10))
+                        .foregroundColor(TerminalColors.dimmedText)
+                }
+            }
+            .buttonStyle(.plain)
+
             Button(action: handleUpdatesAction) {
                 SettingsRowView(icon: "arrow.triangle.2.circlepath", title: "Check for Updates") {
                     updateStatusView
@@ -161,7 +171,7 @@ struct PanelSettingsView: View {
             HStack {
                 Image(systemName: "xmark.circle")
                     .font(.system(size: 13))
-                Text("Quit Notchi")
+                Text("Quit Notchi Remix")
                     .font(.system(size: 12, weight: .medium))
             }
             .foregroundColor(TerminalColors.red)

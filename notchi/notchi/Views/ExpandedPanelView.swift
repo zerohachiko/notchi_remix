@@ -23,6 +23,7 @@ struct ExpandedPanelView: View {
     let sessionStore: SessionStore
     let usageService: ClaudeUsageService
     @Binding var showingSettings: Bool
+    @Binding var showingClaudeSettings: Bool
     @Binding var showingSessionActivity: Bool
     @Binding var isActivityCollapsed: Bool
 
@@ -61,7 +62,7 @@ struct ExpandedPanelView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                if !showingSettings {
+                if !showingSettings && !showingClaudeSettings {
                     if shouldShowSessionPicker {
                         sessionPickerContent(geometry: geometry)
                             .transition(.move(edge: .leading).combined(with: .opacity))
@@ -71,14 +72,21 @@ struct ExpandedPanelView: View {
                     }
                 }
 
-                if showingSettings {
-                    PanelSettingsView()
+                if showingSettings && !showingClaudeSettings {
+                    PanelSettingsView(onOpenClaudeSettings: { showingClaudeSettings = true })
+                        .frame(width: geometry.size.width)
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                }
+
+                if showingClaudeSettings {
+                    ClaudeSettingsView()
                         .frame(width: geometry.size.width)
                         .transition(.move(edge: .trailing).combined(with: .opacity))
                 }
             }
         }
         .animation(.easeInOut(duration: 0.25), value: showingSettings)
+        .animation(.easeInOut(duration: 0.25), value: showingClaudeSettings)
         .animation(.easeInOut(duration: 0.25), value: shouldShowSessionPicker)
         .onChange(of: showingSettings) { _, isShowing in
             if !isShowing {

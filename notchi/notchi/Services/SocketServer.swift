@@ -1,7 +1,7 @@
 import Foundation
 import os.log
 
-private let logger = Logger(subsystem: "com.ruban.notchi", category: "SocketServer")
+private let logger = Logger(subsystem: "com.zerohachiko.notchi-remix", category: "SocketServer")
 
 typealias HookEventHandler = @Sendable (HookEvent) -> Void
 
@@ -14,8 +14,8 @@ final class SocketServer {
     private var serverSocket: Int32 = -1
     private var acceptSource: DispatchSourceRead?
     private var eventHandler: HookEventHandler?
-    private let serverQueue = DispatchQueue(label: "com.ruban.notchi.socket.server", qos: .userInitiated)
-    private let clientQueue = DispatchQueue(label: "com.ruban.notchi.socket.client", qos: .userInitiated, attributes: .concurrent)
+    private let serverQueue = DispatchQueue(label: "com.zerohachiko.notchi-remix.socket.server", qos: .userInitiated)
+    private let clientQueue = DispatchQueue(label: "com.zerohachiko.notchi-remix.socket.client", qos: .userInitiated, attributes: .concurrent)
 
     init(socketPath: String = SocketServer.socketPath, clientReadTimeout: TimeInterval = 0.5) {
         self.socketPath = socketPath

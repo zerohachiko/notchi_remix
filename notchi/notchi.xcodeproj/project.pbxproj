@@ -16,12 +16,12 @@
 			containerPortal = 47C9227A2F2CFA1F00EA1E18 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 47C922812F2CFA1F00EA1E18;
-			remoteInfo = notchi;
+			remoteInfo = "notchi-remix";
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		47C922822F2CFA1F00EA1E18 /* notchi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = notchi.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		47C922822F2CFA1F00EA1E18 /* notchi-remix.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "notchi-remix.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A11A00022F50000000EA1E18 /* Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -69,7 +69,7 @@
 		47C922832F2CFA1F00EA1E18 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				47C922822F2CFA1F00EA1E18 /* notchi.app */,
+				47C922822F2CFA1F00EA1E18 /* notchi-remix.app */,
 				A11A00022F50000000EA1E18 /* Tests.xctest */,
 			);
 			name = Products;
@@ -78,9 +78,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		47C922812F2CFA1F00EA1E18 /* notchi */ = {
+		47C922812F2CFA1F00EA1E18 /* notchi-remix */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 47C9228D2F2CFA2000EA1E18 /* Build configuration list for PBXNativeTarget "notchi" */;
+			buildConfigurationList = 47C9228D2F2CFA2000EA1E18 /* Build configuration list for PBXNativeTarget "notchi-remix" */;
 			buildPhases = (
 				47C9227E2F2CFA1F00EA1E18 /* Sources */,
 				47C9227F2F2CFA1F00EA1E18 /* Frameworks */,
@@ -93,12 +93,12 @@
 			fileSystemSynchronizedGroups = (
 				47C922842F2CFA1F00EA1E18 /* notchi */,
 			);
-			name = notchi;
+			name = "notchi-remix";
 			packageProductDependencies = (
 				47C923A12F2CFA1F00EA1E18 /* Sparkle */,
 			);
-			productName = notchi;
-			productReference = 47C922822F2CFA1F00EA1E18 /* notchi.app */;
+			productName = "notchi-remix";
+			productReference = 47C922822F2CFA1F00EA1E18 /* notchi-remix.app */;
 			productType = "com.apple.product-type.application";
 		};
 		A11A00032F50000000EA1E18 /* Tests */ = {
@@ -160,7 +160,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				47C922812F2CFA1F00EA1E18 /* notchi */,
+				47C922812F2CFA1F00EA1E18 /* notchi-remix */,
 				A11A00032F50000000EA1E18 /* Tests */,
 			);
 		};
@@ -203,7 +203,7 @@
 /* Begin PBXTargetDependency section */
 		A11A00082F50000000EA1E18 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 47C922812F2CFA1F00EA1E18 /* notchi */;
+			target = 47C922812F2CFA1F00EA1E18 /* notchi-remix */;
 			targetProxy = A11A00072F50000000EA1E18 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -343,12 +343,13 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 4;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = SXT98GH5HN;
+				DEVELOPMENT_TEAM = R8R7ZH3257;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Notchi Remix";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -357,7 +358,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0.3;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ruban.notchi;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zerohachiko.notchi-remix;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -379,12 +380,13 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 4;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = SXT98GH5HN;
+				DEVELOPMENT_TEAM = R8R7ZH3257;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Notchi Remix";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -393,7 +395,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0.3;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ruban.notchi;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zerohachiko.notchi-remix;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -419,7 +421,7 @@
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ruban.notchi.Tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zerohachiko.notchi-remix.Tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -427,8 +429,8 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/notchi.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/notchi";
-				TEST_TARGET_NAME = notchi;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/notchi-remix.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/notchi-remix";
+				TEST_TARGET_NAME = "notchi-remix";
 			};
 			name = Debug;
 		};
@@ -446,7 +448,7 @@
 					"@loader_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ruban.notchi.Tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zerohachiko.notchi-remix.Tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -454,8 +456,8 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/notchi.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/notchi";
-				TEST_TARGET_NAME = notchi;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/notchi-remix.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/notchi-remix";
+				TEST_TARGET_NAME = "notchi-remix";
 			};
 			name = Release;
 		};
@@ -471,7 +473,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		47C9228D2F2CFA2000EA1E18 /* Build configuration list for PBXNativeTarget "notchi" */ = {
+		47C9228D2F2CFA2000EA1E18 /* Build configuration list for PBXNativeTarget "notchi-remix" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				47C9228E2F2CFA2000EA1E18 /* Debug */,

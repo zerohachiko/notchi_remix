@@ -1,5 +1,5 @@
 #!/bin/bash
-# Notchi Hook - forwards Claude Code events to Notchi app via Unix socket
+# Notchi Remix Hook - forwards Claude Code events to Notchi Remix app via Unix socket
 
 SOCKET_PATH="/tmp/notchi.sock"
 

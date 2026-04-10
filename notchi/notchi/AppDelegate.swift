@@ -3,7 +3,7 @@ import os.log
 import Sparkle
 import SwiftUI
 
-private let logger = Logger(subsystem: "com.ruban.notchi", category: "AppDelegate")
+private let logger = Logger(subsystem: "com.zerohachiko.notchi-remix", category: "AppDelegate")
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate, SPUStandardUserDriverDelegate {

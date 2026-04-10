@@ -1,7 +1,7 @@
 import Foundation
 import os.log
 
-private let logger = Logger(subsystem: "com.ruban.notchi", category: "HookInstaller")
+private let logger = Logger(subsystem: "com.zerohachiko.notchi-remix", category: "HookInstaller")
 
 struct HookInstaller {
 
@@ -112,7 +112,7 @@ struct HookInstaller {
 
         do {
             try data.write(to: settingsURL)
-            logger.info("Updated settings.json with Notchi hooks")
+            logger.info("Updated settings.json with Notchi Remix hooks")
             return true
         } catch {
             logger.error("Failed to write settings.json: \(error.localizedDescription)")
@@ -189,6 +189,6 @@ struct HookInstaller {
             try? data.write(to: settings)
         }
 
-        logger.info("Uninstalled Notchi hooks")
+        logger.info("Uninstalled Notchi Remix hooks")
     }
 }

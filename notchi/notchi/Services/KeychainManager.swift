@@ -2,7 +2,7 @@ import Foundation
 import os.log
 import Security
 
-private let logger = Logger(subsystem: "com.ruban.notchi", category: "KeychainManager")
+private let logger = Logger(subsystem: "com.zerohachiko.notchi-remix", category: "KeychainManager")
 
 struct ClaudeOAuthCredentials: Equatable {
     let accessToken: String
@@ -12,7 +12,7 @@ struct ClaudeOAuthCredentials: Equatable {
 
 enum KeychainManager {
     private static let claudeCodeService = "Claude Code-credentials"
-    private static let notchiService = "com.ruban.notchi"
+    private static let notchiService = "com.zerohachiko.notchi-remix"
     private static let anthropicApiKeyAccount = "anthropicApiKey"
     private static let cachedOAuthTokenAccount = "cachedOAuthToken"
     private static let recentCredentialCacheTTL: TimeInterval = 5
