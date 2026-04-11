@@ -48,6 +48,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate, SP
                 NotchiStateMachine.shared.handleEvent(event)
             }
         }
+        ActiveSessionScanner.scanAndRestore()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

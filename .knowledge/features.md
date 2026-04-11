@@ -36,12 +36,13 @@
   | `SessionEnd` | 会话结束 |
 
 ### 4. 多会话管理
-- **实现**: `SessionStore` + `SessionData`
+- **实现**: `SessionStore` + `SessionData` + `ActiveSessionScanner`
 - 并行跟踪多个 Claude Code 会话
 - 每个会话独立状态: 任务状态、情绪状态、工具使用记录
 - 自动区分交互式 / 非交互式 (`-p`) 会话
 - 会话持续时间实时计算
 - 按工作目录项目名显示
+- **启动时已有会话发现**: 扫描 `~/.claude/sessions/*.json` 注册文件，验证 PID 存活性 (`kill(pid, 0)`)，为活跃会话注入合成 `SessionStart` 事件
 
 ### 5. 展开面板 UI
 - **实现**: `ExpandedPanelView`

@@ -77,16 +77,17 @@ Notchi Remix 是一个 macOS 原生应用，将 MacBook 的刘海 (Notch) 区域
 ## 数据流
 
 ```
-Claude Code 事件
-      │
-      ▼
-notchi-hook.sh (Bash + Python)
-      │  解析 stdin JSON, 构建精简 payload
-      ▼
-Unix Socket → SocketServer.start(onEvent:)
-      │  解码为 HookEvent
-      ▼
-NotchiStateMachine.handleEvent(_:)
+Claude Code 事件 (运行时)                启动时已有会话发现
+      │                                    │
+      ▼                                    ▼
+notchi-hook.sh (Bash + Python)     ActiveSessionScanner
+      │  解析 stdin JSON,              │  扫描 ~/.claude/sessions/*.json
+      │  构建精简 payload               │  验证 PID 存活, 构造合成 SessionStart
+      ▼                                │
+Unix Socket → SocketServer             │
+      │  解码为 HookEvent              │
+      ▼                                ▼
+NotchiStateMachine.handleEvent(_:)  ◀──┘
       │
       ├──▶ SessionStore: 创建/查找/更新会话
       ├──▶ SessionData: 更新任务状态、记录工具使用
@@ -154,6 +155,7 @@ notchi/
     │   ├── HookInstaller.swift         # Hook 安装器
     │   ├── EmotionAnalyzer.swift       # 工具→情绪映射
     │   ├── SessionStore.swift          # 会话存储
+    │   ├── ActiveSessionScanner.swift  # 启动时扫描 ~/.claude/sessions/ 发现已有会话
     │   ├── PermissionResponseService.swift # 权限决策管理 (Allow/Deny/Always Allow)
     │   ├── ClaudeSettingsStore.swift   # Claude 配置读写
     │   ├── ClaudeUsageService.swift    # API 用量查询
