@@ -262,7 +262,10 @@ struct ExpandedPanelView: View {
                         }
                         .frame(maxHeight: 200)
                         .onAppear {
-                            if let lastItem = unifiedActivityItems.last {
+                            let hasQuestions = effectiveSession?.pendingQuestions.isEmpty == false
+                            if hasQuestions {
+                                proxy.scrollTo("question-prompt", anchor: .bottom)
+                            } else if let lastItem = unifiedActivityItems.last {
                                 proxy.scrollTo(lastItem.id, anchor: .bottom)
                             }
                         }

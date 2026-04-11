@@ -53,7 +53,7 @@ struct NotchContentView: View {
 
     /// Uses the system notch curve in collapsed mode when available.
     private var notchClipShape: AnyShape {
-        if !isExpanded, let systemPath = panelManager.systemNotchPath {
+        if !isExpanded && !hasCollapsedActivity, let systemPath = panelManager.systemNotchPath {
             return AnyShape(SystemNotchShape(cgPath: systemPath))
         }
         return AnyShape(NotchShape(
@@ -131,6 +131,7 @@ struct NotchContentView: View {
         )
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .animation(panelAnimation, value: isExpanded)
+        .animation(.easeInOut(duration: 0.25), value: hasCollapsedActivity)
         .onReceive(NotificationCenter.default.publisher(for: .notchiShouldCollapse)) { _ in
             panelManager.collapse()
         }
@@ -154,7 +155,6 @@ struct NotchContentView: View {
         ZStack(alignment: .topTrailing) {
             VStack(alignment: .leading, spacing: 0) {
                 headerRow
-                    .frame(height: notchSize.height)
 
                 if isExpanded {
                     ExpandedPanelView(
@@ -245,17 +245,57 @@ struct NotchContentView: View {
         }
     }
 
+    private var hasCollapsedActivity: Bool {
+        guard !isExpanded else { return false }
+        guard let session = sessionStore.sortedSessions.first else { return false }
+        if !session.pendingQuestions.isEmpty { return true }
+        if session.task == .working || session.task == .compacting || session.task == .waiting {
+            return session.recentEvents.last != nil
+        }
+        if session.task == .idle, !session.recentAssistantMessages.isEmpty {
+            return true
+        }
+        return false
+    }
+
     @ViewBuilder
     private var headerRow: some View {
-        HStack(spacing: 0) {
-            Color.clear
-                .frame(width: notchSize.width - cornerRadiusInsets.closed.top)
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                Color.clear
+                    .frame(width: notchSize.width - cornerRadiusInsets.closed.top)
 
-            headerSprites
-                .offset(x: 15, y: -2)
-                .frame(width: sideWidth)
-                .opacity(isExpanded ? 0 : 1)
-                .animation(.none, value: isExpanded)
+                headerSprites
+                    .offset(x: 15, y: -2)
+                    .frame(width: sideWidth)
+                    .opacity(isExpanded ? 0 : 1)
+                    .animation(.none, value: isExpanded)
+            }
+            .frame(height: notchSize.height)
+
+            if hasCollapsedActivity {
+                collapsedActivityLabel
+                    .frame(maxWidth: notchSize.width)
+                    .clipped()
+                    .padding(.bottom, 4)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var collapsedActivityLabel: some View {
+        let topSession = sessionStore.sortedSessions.first
+        if let question = topSession?.pendingQuestions.first {
+            CollapsedPermissionView(question: question)
+                .padding(.trailing, 8)
+        } else if topSession?.task == .idle,
+                  let lastMessage = topSession?.recentAssistantMessages.last {
+            CollapsedSummaryView(message: lastMessage)
+                .padding(.trailing, 8)
+        } else if let event = topSession?.recentEvents.last {
+            CollapsedActivityView(event: event)
+                .padding(.trailing, 8)
         }
     }
 

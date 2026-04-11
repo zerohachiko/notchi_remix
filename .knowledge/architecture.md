@@ -52,6 +52,8 @@ Notchi Remix 是一个 macOS 原生应用，将 MacBook 的刘海 (Notch) 区域
 │  │  NotchPanel (NSPanel)                                     │   │
 │  │    └── NotchContentView (SwiftUI)                         │   │
 │  │          ├── GrassIslandView + SpriteSheetView (收起态)    │   │
+│  │          ├── CollapsedActivityView / PermissionView /      │   │
+│  │          │   SummaryView (收起态第二行活动信息)             │   │
 │  │          ├── ExpandedPanelView (展开态)                    │   │
 │  │          │     ├── 会话活动列表                             │   │
 │  │          │     ├── QuestionPromptView (权限操作按钮)        │   │
@@ -95,8 +97,10 @@ NotchiStateMachine.handleEvent(_:)  ◀──┘
       ├──▶ EmotionAnalyzer: 工具名映射为情绪
       ├──▶ EmotionState: 累积分数、衰减、阈值判定
       ├──▶ SoundService: 触发通知音
+      ├──▶ SessionStore (Stop): 从 HookEvent.lastAssistantMessage 提取 AI 回复, 记录为 AssistantMessage
       └──▶ PermissionResponseService: 标记 pending (仅 PermissionRequest)
               │
+              ├──▶ NotchPanelManager.expand(): 自动展开灵动岛面板 (仅 PermissionRequest)
               ▼
       SwiftUI @Observable 自动刷新 UI
               │
@@ -141,7 +145,7 @@ notchi/
     ├── Models/                # 数据模型
     │   ├── ClaudeSettings.swift        # ~/.claude/settings.json 模型
     │   ├── EmotionState.swift          # 情绪累积引擎
-    │   ├── HookEvent.swift             # Hook 事件定义
+    │   ├── HookEvent.swift             # Hook 事件定义 (含 lastAssistantMessage)
     │   ├── NotchiState.swift           # 任务+情绪组合状态
     │   ├── NotificationSound.swift     # 通知音枚举 (系统+马里奥8-bit)
     │   ├── SessionData.swift           # 会话数据
@@ -191,15 +195,16 @@ notchi/
     │
     ├── UI/                    # UI 工具组件
     │   ├── TerminalColors.swift        # 深色主题配色
-    │   ├── ActivityRowView.swift       # 活动行
+    │   ├── ActivityRowView.swift       # 活动行 (含可折叠 Diff 预览)
     │   ├── AssistantTextRowView.swift  # AI 回复行
+    │   ├── CollapsedActivityView.swift # 灵动岛收起态: 活动/权限/AI总结展示
     │   ├── MarkdownRenderer.swift      # Markdown 渲染
     │   ├── ProcessingSpinner.swift     # 加载动画
     │   ├── ToolArgumentsView.swift     # 工具参数显示
     │   └── UserPromptBubbleView.swift  # 用户提示气泡
     │
     ├── Resources/
-    │   ├── notchi-hook.sh              # Claude Code Hook 脚本
+    │   ├── notchi-hook.sh              # Claude Code Hook 脚本 (含 last_assistant_message 提取)
     │   └── Sounds/                     # 自定义音效文件 (8-bit .wav)
     │       ├── mario_coin.wav
     │       ├── mario_complete.wav

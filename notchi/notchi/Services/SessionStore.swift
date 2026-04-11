@@ -106,6 +106,14 @@ final class SessionStore {
         case "Stop", "SubagentStop":
             session.clearPendingQuestions()
             session.updateTask(.idle)
+            if let message = event.lastAssistantMessage, !message.isEmpty {
+                let assistantMsg = AssistantMessage(
+                    id: UUID().uuidString,
+                    text: message,
+                    timestamp: Date()
+                )
+                session.recordAssistantMessages([assistantMsg])
+            }
 
         case "SessionEnd":
             session.endSession()

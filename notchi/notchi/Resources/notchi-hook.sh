@@ -61,6 +61,12 @@ if hook_event == 'UserPromptSubmit':
     if prompt:
         output['user_prompt'] = prompt
 
+# Pass last assistant message for Stop/SubagentStop
+if hook_event in ('Stop', 'SubagentStop'):
+    last_msg = input_data.get('last_assistant_message', '')
+    if last_msg:
+        output['last_assistant_message'] = last_msg
+
 tool = input_data.get('tool_name', '')
 if tool:
     output['tool'] = tool

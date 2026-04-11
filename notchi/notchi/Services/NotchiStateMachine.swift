@@ -66,6 +66,7 @@ final class NotchiStateMachine {
         case "PermissionRequest":
             SoundService.shared.playNotificationSound(sessionId: event.sessionId, isInteractive: session.isInteractive)
             PermissionResponseService.shared.markPending(sessionId: event.sessionId)
+            NotchPanelManager.shared.expand()
 
         case "PostToolUse":
             scheduleFileSync(sessionId: event.sessionId, cwd: event.cwd)

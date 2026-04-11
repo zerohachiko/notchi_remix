@@ -159,7 +159,75 @@
 - Claude 配置编辑入口
 - 退出应用
 
-## 状态枚举
+### 14. 灵动岛收起态活动信息展示
+- **实现**: `CollapsedActivityView` + `CollapsedPermissionView` + `CollapsedSummaryView` (新增 `UI/CollapsedActivityView.swift`)
+- 灵动岛收起状态下，在刘海区域第二行 (notch 下方) 自动延伸显示当前最新操作信息
+- **布局**: VStack 两行结构 — 第一行为 notch 占位 + 精灵图 (固定高度 `notchSize.height`), 第二行为活动信息 (因摄像头遮挡, 文字只能放在第二行)
+- **展示优先级**: 权限请求 > AI 任务总结 (idle 时) > 工具活动 (working 时)
+- **工具活动展示** (`CollapsedActivityView`):
+  - 状态指示符: ● (运行中/amber) / ✓ (成功/green) / ✗ (失败/red)
+  - 工具名 (Write / Bash / Read / Edit 等)
+  - 简短描述 (文件名或命令前 30 字符)
+- **权限请求展示** (`CollapsedPermissionView`):
+  - ⚠ 图标 + 权限请求问题文本
+  - 优先级最高 (有权限请求时优先显示)
+- **AI 总结展示** (`CollapsedSummaryView`):
+  - ✓ 图标 (绿色) + 最后一条 AI 回复的首行文本 (最多 40 字符)
+  - 任务完成 (idle) 且有 `recentAssistantMessages` 时显示
+- **灵动岛形状适配**:
+  - 有活动信息时不使用系统刘海曲线裁切, 改用 `NotchShape` 以支持向下延伸
+  - 最大宽度限制为 `notchSize.width`, 防止内容溢出
+  - `.easeInOut(duration: 0.25)` 动画控制展示/隐藏过渡
+- **关键修改文件**:
+  | 文件 | 改动 |
+  |------|------|
+  | `NotchContentView.swift` | `headerRow` 改为 VStack 两行, 增加 `hasCollapsedActivity`/`collapsedActivityLabel`, 修改 `notchClipShape` 适配 |
+  | `UI/CollapsedActivityView.swift` | 新增文件, 包含 `CollapsedActivityView`、`CollapsedPermissionView`、`CollapsedSummaryView` |
+
+### 15. 权限请求自动展开灵动岛
+- **实现**: `NotchiStateMachine` + `NotchPanelManager` + `ExpandedPanelView`
+- 收到 `PermissionRequest` 事件时, 自动调用 `NotchPanelManager.shared.expand()` 展开面板
+- 展开后 ScrollView 自动聚焦到 `QuestionPromptView` (权限操作按钮区域)
+- `ExpandedPanelView.onAppear` 优先检查 `pendingQuestions`, 有则滚动到 `"question-prompt"`
+- **关键修改文件**:
+  | 文件 | 改动 |
+  |------|------|
+  | `Services/NotchiStateMachine.swift` | `PermissionRequest` case 中增加 `NotchPanelManager.shared.expand()` |
+  | `Views/ExpandedPanelView.swift` | `onAppear` 滚动逻辑优先处理 pendingQuestions |
+
+### 16. 展开面板活动内容详情 (可折叠 Diff 预览)
+- **实现**: `ActivityRowView` + `ActivityContentPreview` (在 `UI/ActivityRowView.swift` 中)
+- 展开面板中的工具活动行支持点击展开/折叠内容详情
+- 有可展开内容的行显示 ▶/▼ 箭头指示
+- **内容展示**:
+  | 工具 | 展示内容 |
+  |------|----------|
+  | Write | 写入的文件内容 (等宽字体, 最多 6 行, 300 字符截断) |
+  | Edit | diff 风格: `- old` (红色旧代码) + `+ new` (绿色新代码) |
+  | Bash | 执行的命令内容 |
+- 展开/收起动画: `easeInOut(duration: 0.15)`
+- **关键修改文件**:
+  | 文件 | 改动 |
+  |------|------|
+  | `UI/ActivityRowView.swift` | `ActivityRowView` 增加 `isContentExpanded` 状态和点击交互; 新增 `ActivityContentPreview` 私有视图 |
+
+### 17. 任务完成后 AI 回复总结
+- **实现**: `notchi-hook.sh` + `HookEvent` + `SessionStore` + `CollapsedSummaryView`
+- Claude Code 任务完成 (`Stop`/`SubagentStop` 事件) 后，提取 AI 的最后一条回复消息
+- 灵动岛收起态展示任务总结 (首行文本, 绿色 ✓ 图标)
+- **数据流**:
+  1. `notchi-hook.sh` 从 `Stop`/`SubagentStop` 事件的 `input_data` 中提取 `last_assistant_message` 字段
+  2. Hook 脚本将该字段传递到 Socket payload
+  3. `HookEvent` 模型新增 `lastAssistantMessage: String?` 属性
+  4. `SessionStore` 在处理 Stop 事件时, 将消息封装为 `AssistantMessage` 并调用 `session.recordAssistantMessages()`
+  5. `NotchContentView.collapsedActivityLabel` 在 idle 状态检测 `recentAssistantMessages`, 使用 `CollapsedSummaryView` 展示
+- **关键修改文件**:
+  | 文件 | 改动 |
+  |------|------|
+  | `Resources/notchi-hook.sh` | Stop/SubagentStop 事件提取并传递 `last_assistant_message` |
+  | `Models/HookEvent.swift` | 新增 `lastAssistantMessage` 属性和 CodingKeys |
+  | `Services/SessionStore.swift` | Stop 事件处理中记录 `AssistantMessage` |
+  | `UI/CollapsedActivityView.swift` | 新增 `CollapsedSummaryView` 视图 |
 
 ### NotchiTask (任务状态)
 | 值 | 说明 |

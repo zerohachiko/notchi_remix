@@ -3,6 +3,17 @@ import SwiftUI
 
 struct ActivityRowView: View {
     let event: SessionEvent
+    @State private var isContentExpanded = false
+
+    private var hasExpandableContent: Bool {
+        guard let input = event.toolInput else { return false }
+        switch event.tool {
+        case "Write": return input["content"] is String
+        case "Edit": return input["new_str"] is String || input["old_str"] is String
+        case "Bash": return input["command"] is String
+        default: return false
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -11,6 +22,19 @@ struct ActivityRowView: View {
                 toolName
                 if event.status != .running {
                     statusLabel
+                }
+                if hasExpandableContent {
+                    Image(systemName: isContentExpanded ? "chevron.down" : "chevron.right")
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundColor(TerminalColors.dimmedText)
+                }
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                if hasExpandableContent {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        isContentExpanded.toggle()
+                    }
                 }
             }
 
@@ -21,6 +45,13 @@ struct ActivityRowView: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .padding(.leading, 13)
+            }
+
+            if isContentExpanded, let input = event.toolInput {
+                ActivityContentPreview(tool: event.tool, toolInput: input)
+                    .padding(.leading, 13)
+                    .padding(.top, 4)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
         .padding(.vertical, 4)
@@ -51,6 +82,54 @@ struct ActivityRowView: View {
         return Text(isSuccess ? "Completed" : "Failed")
             .font(.system(size: 12))
             .foregroundColor(isSuccess ? TerminalColors.secondaryText : TerminalColors.red)
+    }
+}
+
+private struct ActivityContentPreview: View {
+    let tool: String?
+    let toolInput: [String: Any]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            switch tool {
+            case "Write":
+                if let content = toolInput["content"] as? String {
+                    contentBlock(content)
+                }
+            case "Edit":
+                if let oldStr = toolInput["old_str"] as? String, !oldStr.isEmpty {
+                    Text("- old")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundColor(TerminalColors.red.opacity(0.8))
+                    contentBlock(oldStr, color: TerminalColors.red.opacity(0.6))
+                }
+                if let newStr = toolInput["new_str"] as? String, !newStr.isEmpty {
+                    Text("+ new")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundColor(TerminalColors.green.opacity(0.8))
+                    contentBlock(newStr, color: TerminalColors.green.opacity(0.6))
+                }
+            case "Bash":
+                if let command = toolInput["command"] as? String {
+                    contentBlock(command)
+                }
+            default:
+                EmptyView()
+            }
+        }
+    }
+
+    private func contentBlock(_ text: String, color: Color = TerminalColors.secondaryText) -> some View {
+        let preview = String(text.prefix(300))
+        return Text(preview + (text.count > 300 ? "…" : ""))
+            .font(.system(size: 10, design: .monospaced))
+            .foregroundColor(color)
+            .lineLimit(6)
+            .truncationMode(.tail)
+            .padding(6)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.white.opacity(0.03))
+            .cornerRadius(4)
     }
 }
 
