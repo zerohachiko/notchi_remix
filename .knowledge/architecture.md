@@ -23,9 +23,9 @@ Notchi Remix 是一个 macOS 原生应用，将 MacBook 的刘海 (Notch) 区域
 │                      Claude Code (终端)                          │
 │                                                                  │
 │  运行时触发 Hook → ~/.claude/hooks/notchi-hook.sh                │
-│                         │                                        │
-│                         ▼                                        │
-│              Unix Socket 发送 JSON 事件                           │
+│                         │ ▲                                      │
+│                         ▼ │ (PermissionRequest 响应 JSON)        │
+│              Unix Socket 双向通信                                 │
 │              /tmp/notchi.sock                                     │
 └──────────────────────────┬──────────────────────────────────────┘
                            │
@@ -34,18 +34,18 @@ Notchi Remix 是一个 macOS 原生应用，将 MacBook 的刘海 (Notch) 区域
 │                                                                  │
 │  ┌──────────────┐    ┌───────────────────┐    ┌──────────────┐  │
 │  │ SocketServer │───▶│ NotchiStateMachine│───▶│ SessionStore │  │
-│  │  (接收事件)   │    │   (状态机核心)     │    │  (会话管理)   │  │
-│  └──────────────┘    └────────┬──────────┘    └──────┬───────┘  │
-│                               │                      │           │
-│                    ┌──────────▼──────────┐    ┌──────▼───────┐  │
-│                    │ ConversationParser  │    │ SessionData  │  │
-│                    │  (JSONL 增量解析)    │    │ (会话数据)    │  │
-│                    └─────────────────────┘    └──────┬───────┘  │
-│                                                      │           │
-│                    ┌─────────────────────┐    ┌──────▼───────┐  │
-│                    │  EmotionAnalyzer    │    │ EmotionState │  │
-│                    │  (工具→情绪映射)     │    │ (情绪累积)    │  │
-│                    └─────────────────────┘    └──────────────┘  │
+│  │(双向Socket通信)│    │   (状态机核心)     │    │  (会话管理)   │  │
+│  └──────┬───────┘    └────────┬──────────┘    └──────┬───────┘  │
+│         ▲                     │                      │           │
+│         │              ┌──────▼──────────┐    ┌──────▼───────┐  │
+│  PermissionResponse    │ Conversation-   │    │ SessionData  │  │
+│    Service             │   Parser        │    │ (会话数据)    │  │
+│  (权限决策→Socket回写)  │ (JSONL增量解析)  │    └──────┬───────┘  │
+│                        └────────────────┘    ┌──────▼───────┐  │
+│                    ┌─────────────────────┐    │ EmotionState │  │
+│                    │  EmotionAnalyzer    │    │ (情绪累积)    │  │
+│                    │  (工具→情绪映射)     │    └──────────────┘  │
+│                    └─────────────────────┘                       │
 │                                                                  │
 │  ┌────────────────────────── UI 层 ─────────────────────────┐   │
 │  │                                                           │   │
@@ -54,6 +54,7 @@ Notchi Remix 是一个 macOS 原生应用，将 MacBook 的刘海 (Notch) 区域
 │  │          ├── GrassIslandView + SpriteSheetView (收起态)    │   │
 │  │          ├── ExpandedPanelView (展开态)                    │   │
 │  │          │     ├── 会话活动列表                             │   │
+│  │          │     ├── QuestionPromptView (权限操作按钮)        │   │
 │  │          │     ├── PanelSettingsView (设置)                │   │
 │  │          │     └── ClaudeSettingsView (Claude 配置编辑)    │   │
 │  │          └── NotchShape (刘海形状动画)                     │   │
@@ -66,6 +67,9 @@ Notchi Remix 是一个 macOS 原生应用，将 MacBook 的刘海 (Notch) 区域
 │  │ ClaudeUsageService (用量查询)     │                           │
 │  │ EventMonitor   (全局事件监听)     │                           │
 │  │ ClaudeSettingsStore (配置读写)    │                           │
+│  │ PermissionResponseService         │                           │
+│  │   (权限决策管理, Allow/Deny/      │                           │
+│  │    Always Allow → Socket回写)     │                           │
 │  └───────────────────────────────────┘                           │
 └──────────────────────────────────────────────────────────────────┘
 ```
@@ -89,10 +93,20 @@ NotchiStateMachine.handleEvent(_:)
       ├──▶ ConversationParser: 增量解析 JSONL 对话文件
       ├──▶ EmotionAnalyzer: 工具名映射为情绪
       ├──▶ EmotionState: 累积分数、衰减、阈值判定
-      └──▶ SoundService: 触发通知音
+      ├──▶ SoundService: 触发通知音
+      └──▶ PermissionResponseService: 标记 pending (仅 PermissionRequest)
               │
               ▼
       SwiftUI @Observable 自动刷新 UI
+              │
+              ▼ (用户点击 Allow / Deny / Always Allow)
+      PermissionResponseService.allow/deny/alwaysAllow()
+              │  构建 hookSpecificOutput JSON
+              ▼
+      SocketServer.respondToPermission()
+              │  写回保持打开的客户端 socket fd
+              ▼
+      notchi-hook.sh 读取响应 → stdout → Claude Code 执行
 ```
 
 ## 目录结构
@@ -133,12 +147,13 @@ notchi/
     │   └── UsageQuota.swift            # 用量配额
     │
     ├── Services/              # 业务服务
-    │   ├── SocketServer.swift          # Unix Socket 服务器
+    │   ├── SocketServer.swift          # Unix Socket 服务器 (双向通信)
     │   ├── NotchiStateMachine.swift    # 核心状态机
     │   ├── ConversationParser.swift    # JSONL 增量解析器
     │   ├── HookInstaller.swift         # Hook 安装器
     │   ├── EmotionAnalyzer.swift       # 工具→情绪映射
     │   ├── SessionStore.swift          # 会话存储
+    │   ├── PermissionResponseService.swift # 权限决策管理 (Allow/Deny/Always Allow)
     │   ├── ClaudeSettingsStore.swift   # Claude 配置读写
     │   ├── ClaudeUsageService.swift    # API 用量查询
     │   ├── EventMonitor.swift          # 全局事件监听
@@ -211,3 +226,10 @@ notchi/
 
 ### 5. 增量文件解析
 `ConversationParser` 记录文件偏移量 (`lastProcessedOffset`)，每次只读取新增行，避免全量重新解析。
+
+### 6. 双向 Socket 通信 (权限响应)
+- **单向事件** (多数事件): Hook → App，写完即关闭
+- **双向交互** (PermissionRequest): Hook 发送事件后 `shutdown(SHUT_WR)` 半关闭写端，App 保留 `clientFd` 到 `pendingPermissionSockets` 字典
+- 用户做出决策后，`PermissionResponseService` 构建 JSON → `SocketServer.respondToPermission()` 写回 → `close(clientFd)`
+- Hook 脚本读取响应后 `print(json.dumps(parsed))` 输出到 stdout，Claude Code 据此执行
+- 超时机制: Hook 脚本等待 120s，超时后静默退出

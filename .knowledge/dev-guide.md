@@ -145,7 +145,8 @@ git merge upstream/main
 | `NotchPanel.swift` | 自定义浮动窗口 |
 | `NotchContentView.swift` | 主 UI 视图 |
 | `NotchiStateMachine.swift` | **核心状态机** |
-| `SocketServer.swift` | Unix Socket 服务器 |
+| `SocketServer.swift` | Unix Socket 服务器 (双向通信) |
+| `PermissionResponseService.swift` | 权限决策管理 (Allow/Deny/Always Allow) |
 | `ConversationParser.swift` | JSONL 增量解析 |
 | `HookInstaller.swift` | Hook 安装/卸载 |
 | `EmotionState.swift` | 情绪累积引擎 |

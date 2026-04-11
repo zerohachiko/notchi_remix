@@ -100,7 +100,41 @@
 - 修改即保存，未知字段向前兼容
 - 保存状态提示 (成功/失败)
 
-### 12. 应用设置
+### 12. 权限请求交互 (Allow / Deny / Always Allow)
+- **实现**: `PermissionResponseService` + `SocketServer` (双向通信) + `notchi-hook.sh`
+- Claude Code 发起 `PermissionRequest` 事件时，灵动岛直接显示操作按钮
+- 三种操作:
+  | 操作 | 快捷键 | 行为 |
+  |------|--------|------|
+  | **Deny** | ⌘N | 拒绝本次权限请求 |
+  | **Allow** | ⌘Y | 允许本次权限请求 |
+  | **Always Allow** | ⌘⇧Y | 允许并通过 `updatedPermissions` 将规则持久化到 `localSettings` |
+- 选择后选择框立即隐藏 (调用 `clearPendingQuestions()`)
+- **双向 Socket 通信机制**:
+  1. Hook 脚本发送事件后执行 `shutdown(SHUT_WR)` (半关闭写端)
+  2. 应用侧保留客户端 socket fd，等待用户决策
+  3. 用户点击按钮后，应用将 JSON 响应写回同一 socket
+  4. Hook 脚本读取响应并输出到 stdout，Claude Code 读取执行
+- `PendingQuestion` 结构携带 `toolName`，用于 Always Allow 构建精确的工具级权限规则
+- Always Allow 响应格式 (Claude Code `hookSpecificOutput`):
+  ```json
+  {
+    "hookSpecificOutput": {
+      "hookEventName": "PermissionRequest",
+      "decision": {
+        "behavior": "allow",
+        "updatedPermissions": [{
+          "type": "addRules",
+          "rules": [{"toolName": "Bash"}],
+          "behavior": "allow",
+          "destination": "localSettings"
+        }]
+      }
+    }
+  }
+  ```
+
+### 13. 应用设置
 - **实现**: `PanelSettingsView` + `AppSettings`
 - 通知音选择
 - 静音开关
