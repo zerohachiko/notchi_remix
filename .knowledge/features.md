@@ -75,9 +75,21 @@
 - Keychain 安全存储密钥
 
 ### 9. 通知音
-- **实现**: `SoundService` + `AppSettings`
+- **实现**: `SoundService` + `AppSettings` + `NotificationSound`
 - 模型生成完成时播放提示音
-- 内置多种提示音可选 (Purr, Pop, Hero 等)
+- 两类音效来源:
+  - **系统音效**: macOS 内置提示音 (Purr, Pop, Hero, Glass 等 14 种)
+  - **自定义 8-bit 音效**: 马里奥风格电子音效，从 app bundle 的 `Resources/Sounds/` 加载 .wav 文件
+- 马里奥音效 (Python 脚本 `scripts/generate_mario_sounds.py` 合成):
+  | 枚举值 | 文件名 | 效果 |
+  |--------|--------|------|
+  | `marioCoin` | `mario_coin.wav` | 经典金币收集音 (方波 B5→E6) |
+  | `marioComplete` | `mario_complete.wav` | 任务完成上行旋律 (方波 C5-E5-G5-C6) |
+  | `marioOneUp` | `mario_oneup.wav` | 1-UP 音效 (三角波 E4-G4-E5-C5-D5-G5) |
+  | `marioPowerUp` | `mario_powerup.wav` | 能量升级渐升音阶 (方波 16 阶) |
+- `NotificationSound.isSystemSound` 属性区分系统/自定义音效
+- `SoundService` 自定义音效使用 `NSSound(contentsOf:byReference:)` 加载并缓存
+- `SoundPickerView` 中马里奥音效显示 🎮 游戏手柄图标 (绿色)，与系统音效的 🔊 喇叭图标区分
 - 静音模式切换
 
 ### 10. 自动更新

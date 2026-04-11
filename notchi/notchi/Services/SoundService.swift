@@ -11,6 +11,8 @@ final class SoundService {
     private static let cooldown: TimeInterval = 2.0
     @ObservationIgnored
     private var lastSoundTimes: [String: Date] = [:]
+    @ObservationIgnored
+    private var cachedBundleSounds: [String: NSSound] = [:]
 
     private init() {}
 
@@ -21,7 +23,7 @@ final class SoundService {
         }
 
         let sound = AppSettings.notificationSound
-        guard let soundName = sound.soundName else {
+        guard sound.soundName != nil else {
             logger.debug("Notification sound disabled")
             return
         }
@@ -39,7 +41,7 @@ final class SoundService {
         }
 
         lastSoundTimes[sessionId] = now
-        playSound(named: soundName)
+        play(sound)
     }
 
     func clearCooldown(for sessionId: String) {
@@ -47,16 +49,49 @@ final class SoundService {
     }
 
     func previewSound(_ sound: NotificationSound) {
-        guard let soundName = sound.soundName else { return }
-        playSound(named: soundName)
+        guard sound.soundName != nil else { return }
+        play(sound)
     }
 
-    private func playSound(named soundName: String) {
+    private func play(_ sound: NotificationSound) {
+        guard let soundName = sound.soundName else { return }
+
+        if sound.isSystemSound {
+            playSystemSound(named: soundName)
+        } else {
+            playBundleSound(named: soundName)
+        }
+    }
+
+    private func playSystemSound(named soundName: String) {
         guard let nsSound = NSSound(named: NSSound.Name(soundName)) else {
-            logger.warning("Sound not found: \(soundName, privacy: .public)")
+            logger.warning("System sound not found: \(soundName, privacy: .public)")
             return
         }
         nsSound.play()
-        logger.debug("Playing sound: \(soundName, privacy: .public)")
+        logger.debug("Playing system sound: \(soundName, privacy: .public)")
+    }
+
+    private func playBundleSound(named soundName: String) {
+        if let cached = cachedBundleSounds[soundName] {
+            cached.stop()
+            cached.play()
+            logger.debug("Playing cached bundle sound: \(soundName, privacy: .public)")
+            return
+        }
+
+        guard let url = Bundle.main.url(forResource: soundName, withExtension: "wav") else {
+            logger.warning("Bundle sound not found: \(soundName, privacy: .public).wav")
+            return
+        }
+
+        guard let nsSound = NSSound(contentsOf: url, byReference: true) else {
+            logger.warning("Failed to load bundle sound: \(soundName, privacy: .public)")
+            return
+        }
+
+        cachedBundleSounds[soundName] = nsSound
+        nsSound.play()
+        logger.debug("Playing bundle sound: \(soundName, privacy: .public)")
     }
 }

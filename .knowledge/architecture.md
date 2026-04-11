@@ -62,7 +62,7 @@ Notchi Remix 是一个 macOS 原生应用，将 MacBook 的刘海 (Notch) 区域
 │                                                                  │
 │  ┌──────────── 辅助服务 ─────────────┐                           │
 │  │ HookInstaller  (Hook 安装/卸载)   │                           │
-│  │ SoundService   (通知音)           │                           │
+│  │ SoundService   (通知音, 系统+自定义) │                           │
 │  │ UpdateManager  (Sparkle 更新)     │                           │
 │  │ ClaudeUsageService (用量查询)     │                           │
 │  │ EventMonitor   (全局事件监听)     │                           │
@@ -142,6 +142,7 @@ notchi/
     │   ├── EmotionState.swift          # 情绪累积引擎
     │   ├── HookEvent.swift             # Hook 事件定义
     │   ├── NotchiState.swift           # 任务+情绪组合状态
+    │   ├── NotificationSound.swift     # 通知音枚举 (系统+马里奥8-bit)
     │   ├── SessionData.swift           # 会话数据
     │   ├── SessionStats.swift          # 会话统计
     │   └── UsageQuota.swift            # 用量配额
@@ -159,7 +160,7 @@ notchi/
     │   ├── EventMonitor.swift          # 全局事件监听
     │   ├── KeychainManager.swift       # Keychain 封装
     │   ├── NotchPanelManager.swift     # 面板管理器
-    │   ├── SoundService.swift          # 声音播放
+    │   ├── SoundService.swift          # 声音播放 (系统音效+自定义bundle音效)
     │   ├── TerminalFocusDetector.swift # 终端焦点检测
     │   └── Update/
     │       ├── NotchiUpdateUserDriver.swift
@@ -196,7 +197,12 @@ notchi/
     │   └── UserPromptBubbleView.swift  # 用户提示气泡
     │
     ├── Resources/
-    │   └── notchi-hook.sh              # Claude Code Hook 脚本
+    │   ├── notchi-hook.sh              # Claude Code Hook 脚本
+    │   └── Sounds/                     # 自定义音效文件 (8-bit .wav)
+    │       ├── mario_coin.wav
+    │       ├── mario_complete.wav
+    │       ├── mario_oneup.wav
+    │       └── mario_powerup.wav
     │
     └── Assets.xcassets/       # 图标和精灵图
         ├── AppIcon.appiconset/

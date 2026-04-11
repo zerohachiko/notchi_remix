@@ -16,6 +16,19 @@ enum NotificationSound: String, CaseIterable {
     case sosumi
     case submarine
     case basso
+    case marioCoin
+    case marioComplete
+    case marioOneUp
+    case marioPowerUp
+
+    var isSystemSound: Bool {
+        switch self {
+        case .marioCoin, .marioComplete, .marioOneUp, .marioPowerUp:
+            return false
+        default:
+            return true
+        }
+    }
 
     var soundName: String? {
         switch self {
@@ -34,6 +47,10 @@ enum NotificationSound: String, CaseIterable {
         case .sosumi: return "Sosumi"
         case .submarine: return "Submarine"
         case .basso: return "Basso"
+        case .marioCoin: return "mario_coin"
+        case .marioComplete: return "mario_complete"
+        case .marioOneUp: return "mario_oneup"
+        case .marioPowerUp: return "mario_powerup"
         }
     }
 
@@ -54,6 +71,10 @@ enum NotificationSound: String, CaseIterable {
         case .sosumi: return "Sosumi"
         case .submarine: return "Submarine"
         case .basso: return "Basso"
+        case .marioCoin: return "🍄 Mario Coin"
+        case .marioComplete: return "🍄 Mario Complete"
+        case .marioOneUp: return "🍄 Mario 1-UP"
+        case .marioPowerUp: return "🍄 Mario Power Up"
         }
     }
 }

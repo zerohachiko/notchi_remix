@@ -76,9 +76,9 @@ struct SoundPickerView: View {
                 Spacer()
 
                 if sound != .none {
-                    Image(systemName: "speaker.wave.1")
+                    Image(systemName: sound.isSystemSound ? "speaker.wave.1" : "gamecontroller")
                         .font(.system(size: 9))
-                        .foregroundColor(TerminalColors.dimmedText)
+                        .foregroundColor(sound.isSystemSound ? TerminalColors.dimmedText : TerminalColors.green)
                 }
             }
             .padding(.horizontal, 10)
