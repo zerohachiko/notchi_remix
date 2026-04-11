@@ -232,8 +232,30 @@ struct ExpandedPanelView: View {
 
                                 let questions = effectiveSession?.pendingQuestions ?? []
                                 if !questions.isEmpty {
-                                    QuestionPromptView(questions: questions)
-                                        .id("question-prompt")
+                                    QuestionPromptView(
+                                        questions: questions,
+                                        sessionId: effectiveSession?.id,
+                                        onAllow: {
+                                            if let sid = effectiveSession?.id {
+                                                PermissionResponseService.shared.allow(sessionId: sid)
+                                                effectiveSession?.clearPendingQuestions()
+                                            }
+                                        },
+                                        onDeny: {
+                                            if let sid = effectiveSession?.id {
+                                                PermissionResponseService.shared.deny(sessionId: sid)
+                                                effectiveSession?.clearPendingQuestions()
+                                            }
+                                        },
+                                        onAlwaysAllow: {
+                                            if let sid = effectiveSession?.id {
+                                                let toolName = questions.first?.toolName
+                                                PermissionResponseService.shared.alwaysAllow(sessionId: sid, toolName: toolName)
+                                                effectiveSession?.clearPendingQuestions()
+                                            }
+                                        }
+                                    )
+                                    .id("question-prompt")
                                 }
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)

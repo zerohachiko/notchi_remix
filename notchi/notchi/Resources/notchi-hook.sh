@@ -23,6 +23,8 @@ import os
 import socket
 import sys
 
+TIMEOUT = 120
+
 try:
     input_data = json.load(sys.stdin)
 except:
@@ -75,7 +77,27 @@ try:
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock.connect('$SOCKET_PATH')
     sock.sendall(json.dumps(output).encode())
-    sock.close()
+
+    if hook_event == 'PermissionRequest':
+        sock.settimeout(TIMEOUT)
+        try:
+            sock.shutdown(socket.SHUT_WR)
+            chunks = []
+            while True:
+                chunk = sock.recv(4096)
+                if not chunk:
+                    break
+                chunks.append(chunk)
+            response = b''.join(chunks).decode('utf-8', errors='replace').strip()
+            if response:
+                parsed = json.loads(response)
+                print(json.dumps(parsed))
+                sys.exit(0)
+        except (socket.timeout, json.JSONDecodeError, OSError):
+            pass
+        sock.close()
+    else:
+        sock.close()
 except:
     pass
 "

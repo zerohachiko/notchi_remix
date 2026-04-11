@@ -35,6 +35,8 @@ final class NotchiStateMachine {
 
         switch event.event {
         case "UserPromptSubmit":
+            PermissionResponseService.shared.clearPending(sessionId: event.sessionId)
+            SocketServer.shared.cancelPendingPermission(sessionId: event.sessionId)
             pendingPositionMarks[event.sessionId] = Task {
                 await ConversationParser.shared.markCurrentPosition(
                     sessionId: event.sessionId,
@@ -63,6 +65,7 @@ final class NotchiStateMachine {
 
         case "PermissionRequest":
             SoundService.shared.playNotificationSound(sessionId: event.sessionId, isInteractive: session.isInteractive)
+            PermissionResponseService.shared.markPending(sessionId: event.sessionId)
 
         case "PostToolUse":
             scheduleFileSync(sessionId: event.sessionId, cwd: event.cwd)
@@ -76,6 +79,8 @@ final class NotchiStateMachine {
             scheduleFileSync(sessionId: event.sessionId, cwd: event.cwd)
 
         case "SessionEnd":
+            PermissionResponseService.shared.clearPending(sessionId: event.sessionId)
+            SocketServer.shared.cancelPendingPermission(sessionId: event.sessionId)
             stopFileWatcher(sessionId: event.sessionId)
             pendingSyncTasks.removeValue(forKey: event.sessionId)?.cancel()
             pendingPositionMarks.removeValue(forKey: event.sessionId)?.cancel()

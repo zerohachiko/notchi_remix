@@ -7,6 +7,8 @@ struct PendingQuestion {
     let question: String
     let header: String?
     let options: [(label: String, description: String?)]
+    let isPermissionRequest: Bool
+    let toolName: String?
 }
 
 @MainActor

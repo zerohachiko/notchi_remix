@@ -17,6 +17,9 @@ final class SocketServer {
     private let serverQueue = DispatchQueue(label: "com.zerohachiko.notchi-remix.socket.server", qos: .userInitiated)
     private let clientQueue = DispatchQueue(label: "com.zerohachiko.notchi-remix.socket.client", qos: .userInitiated, attributes: .concurrent)
 
+    private let pendingLock = NSLock()
+    private var pendingPermissionSockets: [String: Int32] = [:]
+
     init(socketPath: String = SocketServer.socketPath, clientReadTimeout: TimeInterval = 0.5) {
         self.socketPath = socketPath
         self.clientReadTimeout = clientReadTimeout
@@ -106,6 +109,44 @@ final class SocketServer {
         }
     }
 
+    func respondToPermission(sessionId: String, responseJSON: Data) {
+        clientQueue.async { [weak self] in
+            guard let self else { return }
+            let fd: Int32? = self.pendingLock.withLock {
+                self.pendingPermissionSockets.removeValue(forKey: sessionId)
+            }
+            guard let clientFd = fd else {
+                logger.warning("No pending permission socket for session \(sessionId, privacy: .public)")
+                return
+            }
+            responseJSON.withUnsafeBytes { bufferPointer in
+                guard let base = bufferPointer.baseAddress else { return }
+                var totalWritten = 0
+                let count = responseJSON.count
+                while totalWritten < count {
+                    let written = write(clientFd, base.advanced(by: totalWritten), count - totalWritten)
+                    if written > 0 {
+                        totalWritten += written
+                    } else if written == 0 || (errno != EINTR) {
+                        break
+                    }
+                }
+            }
+            close(clientFd)
+            logger.info("Sent permission response for session \(sessionId, privacy: .public)")
+        }
+    }
+
+    func cancelPendingPermission(sessionId: String) {
+        let fd: Int32? = pendingLock.withLock {
+            pendingPermissionSockets.removeValue(forKey: sessionId)
+        }
+        if let clientFd = fd {
+            close(clientFd)
+            logger.info("Cancelled pending permission for session \(sessionId, privacy: .public)")
+        }
+    }
+
     private func prepareSocketPathForBinding() -> SocketPathPreparation {
         guard FileManager.default.fileExists(atPath: socketPath) else {
             return .ready
@@ -163,6 +204,13 @@ final class SocketServer {
     }
 
     private func stopServer() {
+        pendingLock.withLock {
+            for (_, fd) in pendingPermissionSockets {
+                close(fd)
+            }
+            pendingPermissionSockets.removeAll()
+        }
+
         if let acceptSource {
             acceptSource.cancel()
             self.acceptSource = nil
@@ -213,17 +261,31 @@ final class SocketServer {
     }
 
     private func handleClient(_ clientSocket: Int32, eventHandler: HookEventHandler?) {
-        defer { close(clientSocket) }
-
-        guard let allData = readClientPayload(from: clientSocket), !allData.isEmpty else { return }
+        guard let allData = readClientPayload(from: clientSocket), !allData.isEmpty else {
+            close(clientSocket)
+            return
+        }
 
         guard let event = try? JSONDecoder().decode(HookEvent.self, from: allData) else {
             logger.warning("Failed to parse event")
+            close(clientSocket)
             return
         }
 
         logEvent(event)
-        eventHandler?(event)
+
+        if event.event == "PermissionRequest" {
+            pendingLock.withLock {
+                if let old = pendingPermissionSockets.removeValue(forKey: event.sessionId) {
+                    close(old)
+                }
+                pendingPermissionSockets[event.sessionId] = clientSocket
+            }
+            eventHandler?(event)
+        } else {
+            close(clientSocket)
+            eventHandler?(event)
+        }
     }
 
     private func readClientPayload(from clientSocket: Int32) -> Data? {
@@ -236,8 +298,11 @@ final class SocketServer {
             case .ready:
                 break
             case .timedOut:
-                logger.warning("Dropped idle client connection after read timeout")
-                return nil
+                if allData.isEmpty {
+                    logger.warning("Dropped idle client connection after read timeout")
+                    return nil
+                }
+                return allData
             case .failed(let errorCode):
                 logger.warning("Failed waiting for client socket readability: \(errorCode)")
                 return nil
@@ -314,6 +379,9 @@ final class SocketServer {
             let tool = event.tool ?? "unknown"
             let success = event.status != "error"
             logger.info("Result: \(success ? "✓" : "✗", privacy: .public) \(tool, privacy: .public)")
+        case "PermissionRequest":
+            let tool = event.tool ?? "unknown"
+            logger.info("Permission: \(tool, privacy: .public)")
         case "Stop", "SubagentStop":
             logger.info("Done")
         default:

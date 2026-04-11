@@ -177,7 +177,7 @@ final class SessionStore {
                 guard let label = opt["label"] as? String else { return nil }
                 return (label: label, description: opt["description"] as? String)
             }
-            return PendingQuestion(question: questionText, header: header, options: options)
+            return PendingQuestion(question: questionText, header: header, options: options, isPermissionRequest: false, toolName: nil)
         }
     }
 
@@ -199,12 +199,13 @@ final class SessionStore {
         return PendingQuestion(
             question: description ?? "\(toolName) wants to proceed",
             header: "Permission Request",
-            // Claude Code permission prompts always present these three choices
             options: [
                 (label: "Yes", description: nil),
                 (label: "Yes, and don't ask again", description: nil),
                 (label: "No", description: nil),
-            ]
+            ],
+            isPermissionRequest: true,
+            toolName: tool
         )
     }
 }

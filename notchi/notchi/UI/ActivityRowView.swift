@@ -56,6 +56,10 @@ struct ActivityRowView: View {
 
 struct QuestionPromptView: View {
     let questions: [PendingQuestion]
+    let sessionId: String?
+    var onAllow: (() -> Void)?
+    var onDeny: (() -> Void)?
+    var onAlwaysAllow: (() -> Void)?
     @State private var currentIndex = 0
 
     private var clampedIndex: Int {
@@ -70,12 +74,20 @@ struct QuestionPromptView: View {
         questions.count > 1
     }
 
+    private var canRespond: Bool {
+        current.isPermissionRequest && sessionId != nil
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             questionHeader
             questionText
-            optionsList
-            answerHint
+            if canRespond {
+                permissionActions
+            } else {
+                optionsList
+                answerHint
+            }
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -83,7 +95,7 @@ struct QuestionPromptView: View {
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(TerminalColors.claudeOrange.opacity(0.3), lineWidth: 1)
+                .stroke(canRespond ? TerminalColors.claudeOrange.opacity(0.5) : TerminalColors.claudeOrange.opacity(0.3), lineWidth: 1)
         )
         .padding(.vertical, 4)
         .onChange(of: questions.count) {
@@ -164,6 +176,77 @@ struct QuestionPromptView: View {
                     }
                 }
             }
+        }
+    }
+
+    private var permissionActions: some View {
+        VStack(spacing: 6) {
+            HStack(spacing: 8) {
+                Button(action: { onDeny?() }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 12))
+                        Text("Deny")
+                            .font(.system(size: 12, weight: .medium))
+                        Text("⌘N")
+                            .font(.system(size: 10))
+                            .foregroundColor(TerminalColors.dimmedText)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 7)
+                    .background(TerminalColors.red.opacity(0.15))
+                    .foregroundColor(TerminalColors.red)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(TerminalColors.red.opacity(0.3), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut("n", modifiers: .command)
+
+                Button(action: { onAllow?() }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 12))
+                        Text("Allow")
+                            .font(.system(size: 12, weight: .medium))
+                        Text("⌘Y")
+                            .font(.system(size: 10))
+                            .foregroundColor(TerminalColors.dimmedText.opacity(0.8))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 7)
+                    .background(TerminalColors.primaryText.opacity(0.9))
+                    .foregroundColor(.black)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut("y", modifiers: .command)
+            }
+
+            Button(action: { onAlwaysAllow?() }) {
+                HStack(spacing: 4) {
+                    Image(systemName: "checkmark.shield.fill")
+                        .font(.system(size: 12))
+                    Text("Always Allow")
+                        .font(.system(size: 12, weight: .medium))
+                    Text("⌘⇧Y")
+                        .font(.system(size: 10))
+                        .foregroundColor(TerminalColors.dimmedText)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 7)
+                .background(TerminalColors.green.opacity(0.15))
+                .foregroundColor(TerminalColors.green)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(TerminalColors.green.opacity(0.3), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut("y", modifiers: [.command, .shift])
         }
     }
 
