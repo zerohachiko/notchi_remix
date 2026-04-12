@@ -11,9 +11,15 @@ https://github.com/user-attachments/assets/e417bd40-cae8-47c0-998a-905166cf3513
 
 - Reacts to Claude Code events in real-time (thinking, working, errors, completions)
 - Analyzes conversation sentiment to show emotions (happy, sad, neutral, sob)
-- Click to expand and see session time and usage quota
+- Shows live activity info in collapsed notch (current tool operation, file names, permission requests, AI task summary)
+- Click to expand and see session activity feed with collapsible diff previews for Write/Edit operations
+- Respond to Claude Code permission requests (Allow / Deny / Always Allow) directly from the notch panel
+- Auto-expands the notch panel when a permission request arrives, scrolling to the action buttons
+- Displays AI's final reply summary in collapsed state when a task completes
+- Visual editor for `~/.claude/settings.json` (env vars, hooks, permissions, plugins)
 - Supports multiple concurrent Claude Code sessions with individual sprites
-- Sound effects for events (optional, auto-muted when terminal is focused)
+- Session time tracking and Anthropic API usage quota display
+- Sound effects for events (system sounds + 8-bit Mario-style, auto-muted when terminal is focused)
 - Auto-updates via Sparkle
 
 ## Requirements
