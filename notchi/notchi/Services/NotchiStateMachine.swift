@@ -32,19 +32,22 @@ final class NotchiStateMachine {
     func handleEvent(_ event: HookEvent) {
         let session = sessionStore.process(event)
         let isDone = event.status == "waiting_for_input"
+        let isClaude = session.agentSource == .claude
 
         switch event.event {
         case "UserPromptSubmit":
             PermissionResponseService.shared.clearPending(sessionId: event.sessionId)
             SocketServer.shared.cancelPendingPermission(sessionId: event.sessionId)
-            pendingPositionMarks[event.sessionId] = Task {
-                await ConversationParser.shared.markCurrentPosition(
-                    sessionId: event.sessionId,
-                    cwd: event.cwd
-                )
-            }
-            if session.isInteractive {
-                startFileWatcher(sessionId: event.sessionId, cwd: event.cwd)
+            if isClaude {
+                pendingPositionMarks[event.sessionId] = Task {
+                    await ConversationParser.shared.markCurrentPosition(
+                        sessionId: event.sessionId,
+                        cwd: event.cwd
+                    )
+                }
+                if session.isInteractive {
+                    startFileWatcher(sessionId: event.sessionId, cwd: event.cwd)
+                }
             }
 
             if session.isInteractive, let prompt = event.userPrompt {
@@ -54,7 +57,7 @@ final class NotchiStateMachine {
                 }
             }
 
-            if session.isInteractive, !SessionStore.isLocalSlashCommand(event.userPrompt) {
+            if isClaude, session.isInteractive, !SessionStore.isLocalSlashCommand(event.userPrompt) {
                 handleClaudeUsageResumeTrigger(.userPromptSubmit)
             }
 
@@ -69,24 +72,32 @@ final class NotchiStateMachine {
             NotchPanelManager.shared.expand()
 
         case "PostToolUse":
-            scheduleFileSync(sessionId: event.sessionId, cwd: event.cwd)
+            if isClaude {
+                scheduleFileSync(sessionId: event.sessionId, cwd: event.cwd)
+            }
 
         case "SessionStart":
-            handleClaudeUsageResumeTrigger(.sessionStart)
+            if isClaude {
+                handleClaudeUsageResumeTrigger(.sessionStart)
+            }
 
         case "Stop":
             SoundService.shared.playNotificationSound(sessionId: event.sessionId, isInteractive: session.isInteractive)
-            stopFileWatcher(sessionId: event.sessionId)
-            scheduleFileSync(sessionId: event.sessionId, cwd: event.cwd)
+            if isClaude {
+                stopFileWatcher(sessionId: event.sessionId)
+                scheduleFileSync(sessionId: event.sessionId, cwd: event.cwd)
+            }
 
         case "SessionEnd":
             PermissionResponseService.shared.clearPending(sessionId: event.sessionId)
             SocketServer.shared.cancelPendingPermission(sessionId: event.sessionId)
-            stopFileWatcher(sessionId: event.sessionId)
-            pendingSyncTasks.removeValue(forKey: event.sessionId)?.cancel()
-            pendingPositionMarks.removeValue(forKey: event.sessionId)?.cancel()
+            if isClaude {
+                stopFileWatcher(sessionId: event.sessionId)
+                pendingSyncTasks.removeValue(forKey: event.sessionId)?.cancel()
+                pendingPositionMarks.removeValue(forKey: event.sessionId)?.cancel()
+                Task { await ConversationParser.shared.resetState(for: event.sessionId) }
+            }
             SoundService.shared.clearCooldown(for: event.sessionId)
-            Task { await ConversationParser.shared.resetState(for: event.sessionId) }
             if sessionStore.activeSessionCount == 0 {
                 logger.info("Global state: idle")
             }

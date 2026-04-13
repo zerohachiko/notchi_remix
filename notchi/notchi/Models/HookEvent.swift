@@ -1,5 +1,17 @@
 import Foundation
 
+enum AgentSource: String, Decodable, Sendable {
+    case claude
+    case codex
+
+    var displayName: String {
+        switch self {
+        case .claude: return "Claude"
+        case .codex: return "Codex"
+        }
+    }
+}
+
 struct HookEvent: Decodable, Sendable {
     let sessionId: String
     let cwd: String
@@ -14,6 +26,7 @@ struct HookEvent: Decodable, Sendable {
     let permissionMode: String?
     let interactive: Bool?
     let lastAssistantMessage: String?
+    let sourceApp: AgentSource?
 
     enum CodingKeys: String, CodingKey {
         case sessionId = "session_id"
@@ -24,6 +37,7 @@ struct HookEvent: Decodable, Sendable {
         case permissionMode = "permission_mode"
         case interactive
         case lastAssistantMessage = "last_assistant_message"
+        case sourceApp = "source_app"
     }
 }
 

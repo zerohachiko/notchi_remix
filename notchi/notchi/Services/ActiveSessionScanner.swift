@@ -72,7 +72,8 @@ enum ActiveSessionScanner {
                 userPrompt: nil,
                 permissionMode: nil,
                 interactive: isInteractive,
-                lastAssistantMessage: nil
+                lastAssistantMessage: nil,
+                sourceApp: nil
             )
 
             NotchiStateMachine.shared.handleEvent(syntheticEvent)

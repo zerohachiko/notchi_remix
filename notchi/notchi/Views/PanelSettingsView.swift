@@ -6,6 +6,9 @@ struct PanelSettingsView: View {
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State private var hooksInstalled = HookInstaller.isInstalled()
     @State private var hooksError = false
+    @State private var codexHooksInstalled = HookInstaller.isCodexInstalled()
+    @State private var codexHooksError = false
+    @State private var codexAvailable = HookInstaller.codexAvailable()
     @State private var apiKeyInput = AppSettings.anthropicApiKey ?? ""
     @ObservedObject private var updateManager = UpdateManager.shared
     private var usageConnected: Bool { ClaudeUsageService.shared.isConnected }
@@ -19,6 +22,18 @@ struct PanelSettingsView: View {
 
     private var hookStatusColor: Color {
         hooksInstalled && !hooksError ? TerminalColors.green : TerminalColors.red
+    }
+
+    private var codexHookStatusText: String {
+        if !codexAvailable { return "Not Found" }
+        if codexHooksError { return "Error" }
+        if codexHooksInstalled { return "Installed" }
+        return "Not Installed"
+    }
+
+    private var codexHookStatusColor: Color {
+        if !codexAvailable { return TerminalColors.dimmedText }
+        return codexHooksInstalled && !codexHooksError ? TerminalColors.green : TerminalColors.red
     }
 
     var body: some View {
@@ -62,11 +77,19 @@ struct PanelSettingsView: View {
             .buttonStyle(.plain)
 
             Button(action: installHooksIfNeeded) {
-                SettingsRowView(icon: "terminal", title: "Hooks") {
+                SettingsRowView(icon: "terminal", title: "Claude Hooks") {
                     statusBadge(hookStatusText, color: hookStatusColor)
                 }
             }
             .buttonStyle(.plain)
+
+            Button(action: installCodexHooksIfNeeded) {
+                SettingsRowView(icon: "terminal.fill", title: "Codex Hooks") {
+                    statusBadge(codexHookStatusText, color: codexHookStatusColor)
+                }
+            }
+            .buttonStyle(.plain)
+            .disabled(!codexAvailable)
 
             Button(action: connectUsage) {
                 SettingsRowView(icon: "gauge.with.dots.needle.33percent", title: "Claude Usage") {
@@ -219,6 +242,17 @@ struct PanelSettingsView: View {
             hooksInstalled = HookInstaller.isInstalled()
         } else {
             hooksError = true
+        }
+    }
+
+    private func installCodexHooksIfNeeded() {
+        guard codexAvailable, !codexHooksInstalled else { return }
+        codexHooksError = false
+        let success = HookInstaller.installCodexIfNeeded()
+        if success {
+            codexHooksInstalled = HookInstaller.isCodexInstalled()
+        } else {
+            codexHooksError = true
         }
     }
 

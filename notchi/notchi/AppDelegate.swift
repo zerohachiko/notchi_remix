@@ -43,6 +43,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate, SP
 
     private func startHookServices() {
         HookInstaller.installIfNeeded()
+        HookInstaller.installCodexIfNeeded()
         SocketServer.shared.start { event in
             Task { @MainActor in
                 NotchiStateMachine.shared.handleEvent(event)

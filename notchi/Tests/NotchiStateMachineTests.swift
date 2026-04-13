@@ -148,7 +148,8 @@ final class NotchiStateMachineTests: XCTestCase {
             userPrompt: userPrompt,
             permissionMode: nil,
             interactive: interactive,
-            lastAssistantMessage: nil
+            lastAssistantMessage: nil,
+            sourceApp: nil
         )
     }
 }

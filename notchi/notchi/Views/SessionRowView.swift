@@ -16,10 +16,23 @@ struct SessionRowView: View {
                     .frame(width: 5, height: 5)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(session.displayTitle)
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(TerminalColors.primaryText)
-                        .lineLimit(1)
+                    HStack(spacing: 4) {
+                        Text(session.displayTitle)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(TerminalColors.primaryText)
+                            .lineLimit(1)
+
+                        Text(session.agentSource.displayName)
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundColor(session.agentSource == .codex ? TerminalColors.green : TerminalColors.amber)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 1)
+                            .background(
+                                (session.agentSource == .codex ? TerminalColors.green : TerminalColors.amber)
+                                    .opacity(0.15)
+                            )
+                            .cornerRadius(3)
+                    }
 
                     if let preview = session.activityPreview {
                         Text(preview)

@@ -252,9 +252,6 @@ struct NotchContentView: View {
         if session.task == .working || session.task == .compacting || session.task == .waiting {
             return session.recentEvents.last != nil
         }
-        if session.task == .idle, !session.recentAssistantMessages.isEmpty {
-            return true
-        }
         return false
     }
 
@@ -288,10 +285,6 @@ struct NotchContentView: View {
         let topSession = sessionStore.sortedSessions.first
         if let question = topSession?.pendingQuestions.first {
             CollapsedPermissionView(question: question)
-                .padding(.trailing, 8)
-        } else if topSession?.task == .idle,
-                  let lastMessage = topSession?.recentAssistantMessages.last {
-            CollapsedSummaryView(message: lastMessage)
                 .padding(.trailing, 8)
         } else if let event = topSession?.recentEvents.last {
             CollapsedActivityView(event: event)

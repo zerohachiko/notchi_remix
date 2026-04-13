@@ -199,6 +199,17 @@ struct ExpandedPanelView: View {
                             Text("\(session.projectName) #\(session.sessionNumber)")
                                 .font(.system(size: 11, weight: .medium))
                                 .foregroundColor(TerminalColors.secondaryText)
+
+                            Text(session.agentSource.displayName)
+                                .font(.system(size: 9, weight: .semibold))
+                                .foregroundColor(session.agentSource == .codex ? TerminalColors.green : TerminalColors.amber)
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 1)
+                                .background(
+                                    (session.agentSource == .codex ? TerminalColors.green : TerminalColors.amber)
+                                        .opacity(0.15)
+                                )
+                                .cornerRadius(3)
                         }
 
                         Spacer()
