@@ -3,6 +3,7 @@ import SwiftUI
 struct SessionSpriteView: View {
     let state: NotchiState
     let isSelected: Bool
+    var agentSource: AgentSource = .claude
 
     private var bobAmplitude: CGFloat {
         guard state.bobAmplitude > 0 else { return 0 }
@@ -14,7 +15,7 @@ struct SessionSpriteView: View {
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 30, paused: bobAmplitude == 0 && state.emotion != .sob)) { timeline in
             SpriteSheetView(
-                spriteSheet: state.spriteSheetName,
+                spriteSheet: state.spriteSheetName(for: agentSource),
                 frameCount: state.frameCount,
                 columns: state.columns,
                 fps: state.animationFPS,

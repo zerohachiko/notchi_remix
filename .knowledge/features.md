@@ -17,11 +17,15 @@
 - 每个会话一个角色，随机位置分布在草地岛上
 - 浮动摆动 (Bob) 动画
 
-### 3. Claude Code 事件监听
-- **实现**: `SocketServer` + `notchi-hook.sh` + `HookInstaller`
+### 3. AI 编程助手事件监听 (Claude Code + Codex CLI)
+- **实现**: `SocketServer` + `notchi-hook.sh` + `notchi-codex-hook.sh` + `HookInstaller`
+- **AgentSource 枚举**: `HookEvent.sourceApp` 字段区分事件来源 (`claude` / `codex`)
+- 统一通过 Unix Domain Socket (`/tmp/notchi.sock`) 接收 JSON 事件
+
+#### Claude Code Hooks
 - Hook 脚本自动安装到 `~/.claude/hooks/notchi-hook.sh`
 - 自动注册到 `~/.claude/settings.json` 的所有事件类型
-- 通过 Unix Domain Socket (`/tmp/notchi.sock`) 接收 JSON 事件
+- 支持双向 Socket 通信 (PermissionRequest 响应)
 - 支持的事件类型:
   | 事件 | 说明 |
   |------|------|
@@ -35,13 +39,41 @@
   | `SubagentStop` | 子代理停止 |
   | `SessionEnd` | 会话结束 |
 
+#### Codex CLI Hooks
+- Hook 脚本自动安装到 `~/.codex/notchi-codex-hook.sh`
+- 自动写入 `~/.codex/hooks.json` 配置
+- 自动启用 `~/.codex/config.toml` 中的 `[features] codex_hooks = true` feature flag
+- 仅单向事件推送 (无权限响应交互)
+- 如果 `~/.codex` 目录不存在则静默跳过安装
+- 支持的事件类型:
+  | 事件 | matcher | 说明 |
+  |------|---------|------|
+  | `SessionStart` | `startup\|resume` | 会话启动/恢复 |
+  | `UserPromptSubmit` | 无 | 用户提交提示词 |
+  | `PreToolUse` | `Bash` | Bash 工具调用前 |
+  | `PostToolUse` | `Bash` | Bash 工具调用后 |
+  | `Stop` | 无 | 模型停止生成 |
+
+#### Claude vs Codex 功能差异
+| 功能 | Claude | Codex |
+|------|--------|-------|
+| 状态监控 (working/idle/sleeping) | ✅ | ✅ |
+| 情绪分析 | ✅ | ✅ |
+| 通知音 | ✅ | ✅ |
+| JSONL 对话文件解析 | ✅ | ❌ (无对应文件) |
+| 文件监听 (DispatchSource) | ✅ | ❌ |
+| 权限交互 (Allow/Deny/Always Allow) | ✅ | ❌ |
+| API 用量跟踪 | ✅ | ❌ |
+| Agent 来源标签 (UI badge) | 琥珀色 "Claude" | 绿色 "Codex" |
+
 ### 4. 多会话管理
 - **实现**: `SessionStore` + `SessionData` + `ActiveSessionScanner`
-- 并行跟踪多个 Claude Code 会话
-- 每个会话独立状态: 任务状态、情绪状态、工具使用记录
+- 并行跟踪多个 Claude Code 和 Codex 会话
+- 每个会话独立状态: 任务状态、情绪状态、工具使用记录、agent 来源 (`agentSource`)
 - 自动区分交互式 / 非交互式 (`-p`) 会话
 - 会话持续时间实时计算
 - 按工作目录项目名显示
+- 会话行 (`SessionRowView`) 和展开面板标题显示 agent 来源 badge (Claude=琥珀色 / Codex=绿色)
 - **启动时已有会话发现**: 扫描 `~/.claude/sessions/*.json` 注册文件，验证 PID 存活性 (`kill(pid, 0)`)，为活跃会话注入合成 `SessionStart` 事件
 
 ### 5. 展开面板 UI
@@ -154,7 +186,8 @@
 - Claude 用量跟踪开关
 - Anthropic API Key 配置
 - 多屏幕选择
-- 重新安装 Hook
+- 重新安装 Claude Hook (状态: Installed/Not Installed/Error)
+- 重新安装 Codex Hook (状态: Installed/Not Installed/Not Found/Error，`~/.codex` 不存在时禁用)
 - 检查更新
 - Claude 配置编辑入口
 - 退出应用

@@ -297,7 +297,8 @@ struct NotchContentView: View {
         let topSession = sessionStore.sortedSessions.first
         SessionSpriteView(
             state: topSession?.state ?? .idle,
-            isSelected: true
+            isSelected: true,
+            agentSource: topSession?.agentSource ?? .claude
         )
     }
 

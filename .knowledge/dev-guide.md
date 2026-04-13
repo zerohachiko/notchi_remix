@@ -133,8 +133,11 @@ git merge upstream/main
 | Product Name | notchi-remix |
 | App Entry | `notchiRemixApp` (notchiApp.swift) |
 | Socket Path | `/tmp/notchi.sock` |
-| Hook Script | `~/.claude/hooks/notchi-hook.sh` |
-| Settings File | `~/.claude/settings.json` |
+| Claude Hook Script | `~/.claude/hooks/notchi-hook.sh` |
+| Claude Settings | `~/.claude/settings.json` |
+| Codex Hook Script | `~/.codex/notchi-codex-hook.sh` |
+| Codex Hooks Config | `~/.codex/hooks.json` |
+| Codex Feature Flag | `~/.codex/config.toml` → `[features] codex_hooks = true` |
 
 ## 关键文件速查
 
@@ -148,12 +151,19 @@ git merge upstream/main
 | `SocketServer.swift` | Unix Socket 服务器 (双向通信) |
 | `PermissionResponseService.swift` | 权限决策管理 (Allow/Deny/Always Allow) |
 | `ConversationParser.swift` | JSONL 增量解析 |
-| `HookInstaller.swift` | Hook 安装/卸载 |
+| `HookInstaller.swift` | Hook 安装/卸载 (Claude + Codex) |
 | `EmotionState.swift` | 情绪累积引擎 |
-| `SessionData.swift` | 会话数据模型 |
+| `SessionData.swift` | 会话数据模型 (含 agentSource) |
 | `AppSettings.swift` | 持久化设置 |
 | `TerminalColors.swift` | UI 配色方案 |
 | `notchi-hook.sh` | Claude Code Hook 脚本 |
+
+## 新增文件速查 (Codex 集成)
+
+| 文件 | 职责 |
+|------|------|
+| `notchi-codex-hook.sh` | Codex CLI Hook 脚本，转发事件到 Unix Socket |
+| `HookEvent.swift` → `AgentSource` | 枚举 `.claude` / `.codex`，标识事件来源 |
 
 ## 开发注意事项
 
@@ -163,9 +173,11 @@ git merge upstream/main
 - 仅显示名称和 Bundle ID 使用 `notchi-remix`
 
 ### 2. Hook 脚本兼容性
-- Hook 脚本文件名为 `notchi-hook.sh`，与原版共用
+- **Claude**: Hook 脚本文件名为 `notchi-hook.sh`，安装到 `~/.claude/hooks/`，通过 `settings.json` 注册
+- **Codex**: Hook 脚本文件名为 `notchi-codex-hook.sh`，安装到 `~/.codex/`，通过 `hooks.json` 注册
+- Codex 需要在 `~/.codex/config.toml` 中启用 `[features] codex_hooks = true` (安装时自动启用)
 - Socket 路径为 `/tmp/notchi.sock`，不能同时运行原版和 Remix
-- 修改 Hook 脚本后需在应用设置中点击 "Reinstall Hook"
+- 修改 Hook 脚本后需在应用设置中点击对应的 "Reinstall Hook"
 
 ### 3. 签名注意
 - 开发时使用自动签名 (Automatic)
@@ -183,9 +195,18 @@ git merge upstream/main
 # 查看应用日志
 log stream --predicate 'subsystem == "com.zerohachiko.notchi-remix"' --level debug
 
-# 手动发送测试事件到 Socket
+# 手动发送 Claude 测试事件到 Socket
 echo '{"session_id":"test","event":"UserPromptSubmit","status":"processing","cwd":"/tmp","interactive":true,"prompt":"hello"}' | nc -U /tmp/notchi.sock
 
-# 检查 Hook 是否安装
+# 手动发送 Codex 测试事件到 Socket (注意 source_app 字段)
+echo '{"session_id":"codex-test","event":"UserPromptSubmit","status":"processing","cwd":"/tmp","interactive":true,"prompt":"hello","source_app":"codex"}' | nc -U /tmp/notchi.sock
+
+# 检查 Claude Hook 是否安装
 cat ~/.claude/settings.json | python3 -m json.tool | grep notchi-hook
+
+# 检查 Codex Hook 是否安装
+cat ~/.codex/hooks.json 2>/dev/null | python3 -m json.tool | grep notchi-codex-hook
+
+# 检查 Codex feature flag 是否启用
+grep codex_hooks ~/.codex/config.toml 2>/dev/null
 ```

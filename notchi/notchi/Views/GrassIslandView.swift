@@ -49,7 +49,8 @@ struct GrassIslandView: View {
                             xPosition: session.spriteXPosition,
                             yOffset: session.spriteYOffset,
                             totalWidth: geometry.size.width,
-                            glowOpacity: glowOpacity(for: session.id)
+                            glowOpacity: glowOpacity(for: session.id),
+                            agentSource: session.agentSource
                         )
                     }
                 }
@@ -150,6 +151,7 @@ private struct GrassSpriteView: View {
     let yOffset: CGFloat
     let totalWidth: CGFloat
     var glowOpacity: Double = 0
+    var agentSource: AgentSource = .claude
 
     private let swayDuration: Double = 2.0
     private var bobAmplitude: CGFloat {
@@ -182,7 +184,7 @@ private struct GrassSpriteView: View {
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !isAnimatingMotion)) { timeline in
             SpriteSheetView(
-                spriteSheet: state.spriteSheetName,
+                spriteSheet: state.spriteSheetName(for: agentSource),
                 frameCount: state.frameCount,
                 columns: state.columns,
                 fps: state.animationFPS,

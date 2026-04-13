@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-Notchi Remix 是一个 macOS 原生应用，将 MacBook 的刘海 (Notch) 区域变成一个 Claude Code 的实时状态面板。通过 Claude Code 的 Hook 机制接收事件，在刘海区域显示动画角色、会话状态、工具使用情况等信息。
+Notchi Remix 是一个 macOS 原生应用，将 MacBook 的刘海 (Notch) 区域变成一个 AI 编程助手的实时状态面板。通过 Claude Code 和 OpenAI Codex CLI 的 Hook 机制接收事件，在刘海区域显示动画角色、会话状态、工具使用情况等信息。支持同时监控多个 Claude Code 和 Codex 会话。
 
 ## 技术栈
 
@@ -26,6 +26,16 @@ Notchi Remix 是一个 macOS 原生应用，将 MacBook 的刘海 (Notch) 区域
 │                         │ ▲                                      │
 │                         ▼ │ (PermissionRequest 响应 JSON)        │
 │              Unix Socket 双向通信                                 │
+│              /tmp/notchi.sock                                     │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+┌──────────────────────────┤──────────────────────────────────────┐
+│                      Codex CLI (终端)                             │
+│                                                                  │
+│  运行时触发 Hook → ~/.codex/notchi-codex-hook.sh                 │
+│                         │                                        │
+│                         ▼ (单向事件推送)                          │
+│              Unix Socket 单向通信                                 │
 │              /tmp/notchi.sock                                     │
 └──────────────────────────┬──────────────────────────────────────┘
                            │
@@ -63,7 +73,7 @@ Notchi Remix 是一个 macOS 原生应用，将 MacBook 的刘海 (Notch) 区域
 │  └───────────────────────────────────────────────────────────┘   │
 │                                                                  │
 │  ┌──────────── 辅助服务 ─────────────┐                           │
-│  │ HookInstaller  (Hook 安装/卸载)   │                           │
+│  │ HookInstaller  (Hook 安装/卸载, 支持 Claude + Codex) │                           │
 │  │ SoundService   (通知音, 系统+自定义) │                           │
 │  │ UpdateManager  (Sparkle 更新)     │                           │
 │  │ ClaudeUsageService (用量查询)     │                           │
@@ -79,26 +89,29 @@ Notchi Remix 是一个 macOS 原生应用，将 MacBook 的刘海 (Notch) 区域
 ## 数据流
 
 ```
-Claude Code 事件 (运行时)                启动时已有会话发现
-      │                                    │
-      ▼                                    ▼
-notchi-hook.sh (Bash + Python)     ActiveSessionScanner
-      │  解析 stdin JSON,              │  扫描 ~/.claude/sessions/*.json
-      │  构建精简 payload               │  验证 PID 存活, 构造合成 SessionStart
-      ▼                                │
-Unix Socket → SocketServer             │
-      │  解码为 HookEvent              │
-      ▼                                ▼
-NotchiStateMachine.handleEvent(_:)  ◀──┘
+Claude Code 事件 (运行时)     Codex CLI 事件 (运行时)     启动时已有会话发现
+      │                            │                        │
+      ▼                            ▼                        ▼
+notchi-hook.sh             notchi-codex-hook.sh      ActiveSessionScanner
+(Bash + Python)            (Bash + Python)           │  扫描 ~/.claude/sessions/*.json
+│  解析 stdin JSON,         │  解析 stdin JSON,       │  验证 PID 存活, 构造合成 SessionStart
+│  构建精简 payload          │  source_app="codex"     │
+│  source_app="claude"      │                         │
+▼                           ▼                         │
+Unix Socket → SocketServer ◀─────────────────────────┘
+      │  解码为 HookEvent (含 sourceApp 字段)
+      ▼
+NotchiStateMachine.handleEvent(_:)
       │
-      ├──▶ SessionStore: 创建/查找/更新会话
+      ├──▶ SessionStore: 创建/查找/更新会话 (含 agentSource: claude/codex)
       ├──▶ SessionData: 更新任务状态、记录工具使用
-      ├──▶ ConversationParser: 增量解析 JSONL 对话文件
+      ├──▶ [仅 Claude] ConversationParser: 增量解析 JSONL 对话文件
       ├──▶ EmotionAnalyzer: 工具名映射为情绪
       ├──▶ EmotionState: 累积分数、衰减、阈值判定
       ├──▶ SoundService: 触发通知音
-      ├──▶ SessionStore (Stop): 从 HookEvent.lastAssistantMessage 提取 AI 回复, 记录为 AssistantMessage
-      └──▶ PermissionResponseService: 标记 pending (仅 PermissionRequest)
+      ├──▶ [仅 Claude] SessionStore (Stop): 从 HookEvent.lastAssistantMessage 提取 AI 回复
+      ├──▶ [仅 Claude] ClaudeUsageService: 用量追踪
+      └──▶ [仅 Claude] PermissionResponseService: 标记 pending (仅 PermissionRequest)
               │
               ├──▶ NotchPanelManager.expand(): 自动展开灵动岛面板 (仅 PermissionRequest)
               ▼
@@ -145,10 +158,10 @@ notchi/
     ├── Models/                # 数据模型
     │   ├── ClaudeSettings.swift        # ~/.claude/settings.json 模型
     │   ├── EmotionState.swift          # 情绪累积引擎
-    │   ├── HookEvent.swift             # Hook 事件定义 (含 lastAssistantMessage)
+    │   ├── HookEvent.swift             # Hook 事件定义 (含 AgentSource 枚举: claude/codex)
     │   ├── NotchiState.swift           # 任务+情绪组合状态
     │   ├── NotificationSound.swift     # 通知音枚举 (系统+马里奥8-bit)
-    │   ├── SessionData.swift           # 会话数据
+    │   ├── SessionData.swift           # 会话数据 (含 agentSource)
     │   ├── SessionStats.swift          # 会话统计
     │   └── UsageQuota.swift            # 用量配额
     │
@@ -156,7 +169,7 @@ notchi/
     │   ├── SocketServer.swift          # Unix Socket 服务器 (双向通信)
     │   ├── NotchiStateMachine.swift    # 核心状态机
     │   ├── ConversationParser.swift    # JSONL 增量解析器
-    │   ├── HookInstaller.swift         # Hook 安装器
+    │   ├── HookInstaller.swift         # Hook 安装器 (Claude + Codex)
     │   ├── EmotionAnalyzer.swift       # 工具→情绪映射
     │   ├── SessionStore.swift          # 会话存储
     │   ├── ActiveSessionScanner.swift  # 启动时扫描 ~/.claude/sessions/ 发现已有会话
@@ -205,6 +218,7 @@ notchi/
     │
     ├── Resources/
     │   ├── notchi-hook.sh              # Claude Code Hook 脚本 (含 last_assistant_message 提取)
+    │   ├── notchi-codex-hook.sh        # Codex CLI Hook 脚本 (source_app=codex)
     │   └── Sounds/                     # 自定义音效文件 (8-bit .wav)
     │       ├── mario_coin.wav
     │       ├── mario_complete.wav
