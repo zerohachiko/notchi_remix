@@ -248,6 +248,7 @@ struct NotchContentView: View {
     private var hasCollapsedActivity: Bool {
         guard !isExpanded else { return false }
         guard let session = sessionStore.sortedSessions.first else { return false }
+        if session.task == .sleeping { return false }
         if !session.pendingQuestions.isEmpty { return true }
         if session.task == .working || session.task == .compacting || session.task == .waiting {
             return session.recentEvents.last != nil
