@@ -33,6 +33,19 @@ final class NotchiStateMachine {
         let session = sessionStore.process(event)
         let isDone = event.status == "waiting_for_input"
         let isClaude = session.agentSource == .claude
+        let source = session.agentSource ?? .claude
+
+        // Play per-hook sound for every event
+        let hookCommands = resolveHookCommands(source: source, eventType: event.event)
+        if !hookCommands.isEmpty {
+            SoundService.shared.playHookSound(
+                source: source,
+                eventType: event.event,
+                hooks: hookCommands,
+                sessionId: event.sessionId,
+                isInteractive: session.isInteractive
+            )
+        }
 
         switch event.event {
         case "UserPromptSubmit":
@@ -212,6 +225,19 @@ final class NotchiStateMachine {
     func resetTestingHooks() {
         handleClaudeUsageResumeTrigger = { trigger in
             ClaudeUsageService.shared.handleClaudeResumeTrigger(trigger)
+        }
+    }
+
+    private func resolveHookCommands(source: AgentSource, eventType: String) -> [String] {
+        switch source {
+        case .claude:
+            let store = ClaudeSettingsStore.shared
+            guard let configs = store.settings.hooks?[eventType] else { return [] }
+            return configs.flatMap { $0.hooks.map(\.command) }
+        case .codex:
+            let store = CodexSettingsStore.shared
+            guard let configs = store.settings.hooks?[eventType] else { return [] }
+            return configs.flatMap { $0.hooks.map(\.command) }
         }
     }
 

@@ -3,6 +3,7 @@ import SwiftUI
 
 struct PanelSettingsView: View {
     var onOpenClaudeSettings: (() -> Void)? = nil
+    var onOpenCodexSettings: (() -> Void)? = nil
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State private var hooksInstalled = HookInstaller.isInstalled()
     @State private var hooksError = false
@@ -160,6 +161,16 @@ struct PanelSettingsView: View {
                 }
             }
             .buttonStyle(.plain)
+
+            Button(action: { onOpenCodexSettings?() }) {
+                SettingsRowView(icon: "doc.text.magnifyingglass", title: "Codex Settings") {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 10))
+                        .foregroundColor(codexAvailable ? TerminalColors.dimmedText : TerminalColors.dimmedText.opacity(0.4))
+                }
+            }
+            .buttonStyle(.plain)
+            .disabled(!codexAvailable)
 
             Button(action: handleUpdatesAction) {
                 SettingsRowView(icon: "arrow.triangle.2.circlepath", title: "Check for Updates") {

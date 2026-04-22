@@ -142,8 +142,47 @@
   - 权限管理 (Allow / Deny)
   - 状态栏命令
   - 扩展市场
-- 修改即保存，未知字段向前兼容
+- **确认保存模式**: 修改仅暂存在内存，底部显示 Discard / Confirm 按钮，点击 Confirm 才写入磁盘
+- 未知字段向前兼容
 - 保存状态提示 (成功/失败)
+
+### 11b. Codex 配置可视化编辑
+- **实现**: `CodexSettingsView` + `CodexSettingsStore` + `CodexSettings` 模型
+- 可视化编辑 `~/.codex/config.toml` (TOML 格式) 和 `~/.codex/hooks.json`
+- 分区管理:
+  - 基础设置 (Model, Approval Policy, Sandbox Mode, Reasoning Effort/Summary, Hide Reasoning, Disable Storage)
+  - Features & Tools (动态读取 `[features]` / `[tools]` 下的布尔开关)
+  - Hooks 管理 (按事件分组, Notchi Hook 保护)
+- **确认保存模式**: 与 Claude 配置一致，修改暂存内存，Confirm 后写磁盘，Discard 回滚
+- 简易 TOML 解析器 (支持 section、key=value、行内注释、引号)
+- `~/.codex` 不存在时禁用入口按钮
+- **关键文件**:
+  | 文件 | 说明 |
+  |------|------|
+  | `Models/CodexSettings.swift` | Codex 配置模型 (CodexSettings, CodexHookEntry, CodexHookEventConfig) |
+  | `Services/CodexSettingsStore.swift` | 读写 config.toml + hooks.json, TOML 解析/序列化, commitSave/discardChanges |
+  | `Views/CodexSettingsView.swift` | 主视图 (ScrollView + 底部确认栏) |
+  | `Views/CodexSettings/CodexBasicSectionView.swift` | 基础设置 (model 输入框 + picker 行) |
+  | `Views/CodexSettings/CodexToolsSectionView.swift` | Features & Tools 开关 |
+  | `Views/CodexSettings/CodexHooksSectionView.swift` | Hooks 管理 (DisclosureGroup + 增删改) |
+
+### 11c. Per-Hook 音效配置
+- **实现**: `HookSoundPickerView` + `AppSettings.hookSounds` + `SoundService.playHookSound`
+- 每个 hook 条目可单独配置通知音效，默认为空 (Muted)
+- 音效配置存储在 UserDefaults (key 格式: `{source}:{eventType}:{command}`)，不写入 CLI 配置文件
+- 内联下拉菜单组件 `HookSoundPickerView`: 喇叭图标 + 音效名 + 上下箭头，支持全部 19 种音效
+- 选中后立即试听 (调用 `SoundService.previewSound`)
+- **运行时播放**: `NotchiStateMachine.handleEvent` 在收到每个事件时，通过 `resolveHookCommands` 查找对应事件类型的 hook 命令列表，调用 `SoundService.playHookSound` 按 key 查找并播放配置的音效
+- 同时适用于 Claude Code 和 Codex 的 hooks
+- **关键修改文件**:
+  | 文件 | 改动 |
+  |------|------|
+  | `Core/AppSettings.swift` | 新增 hookSounds 存储 (hookSoundKey/hookSound/setHookSound) |
+  | `Views/Components/HookSoundPickerView.swift` | 新增内联音效选择器组件 |
+  | `Views/ClaudeSettings/HooksSectionView.swift` | HookEntryRow 中嵌入 HookSoundPickerView |
+  | `Views/CodexSettings/CodexHooksSectionView.swift` | CodexHookEntryRow 中嵌入 HookSoundPickerView |
+  | `Services/SoundService.swift` | 新增 playHookSound 方法 |
+  | `Services/NotchiStateMachine.swift` | handleEvent 中调用 playHookSound + resolveHookCommands |
 
 ### 12. 权限请求交互 (Allow / Deny / Always Allow)
 - **实现**: `PermissionResponseService` + `SocketServer` (双向通信) + `notchi-hook.sh`
@@ -190,6 +229,7 @@
 - 重新安装 Codex Hook (状态: Installed/Not Installed/Not Found/Error，`~/.codex` 不存在时禁用)
 - 检查更新
 - Claude 配置编辑入口
+- Codex 配置编辑入口 (`~/.codex` 不存在时禁用)
 - 退出应用
 
 ### 14. 灵动岛收起态活动信息展示

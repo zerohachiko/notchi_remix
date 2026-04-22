@@ -21,6 +21,7 @@ struct NotchContentView: View {
     @ObservedObject private var updateManager = UpdateManager.shared
     @State private var showingPanelSettings = false
     @State private var showingClaudeSettings = false
+    @State private var showingCodexSettings = false
     @State private var showingSessionActivity = false
     @State private var isMuted = AppSettings.isMuted
     @State private var isActivityCollapsed = false
@@ -68,7 +69,7 @@ struct NotchContentView: View {
     }
 
     private var shouldShowBackButton: Bool {
-        showingPanelSettings || showingClaudeSettings ||
+        showingPanelSettings || showingClaudeSettings || showingCodexSettings ||
         (sessionStore.activeSessionCount >= 2 && showingSessionActivity)
     }
 
@@ -89,11 +90,11 @@ struct NotchContentView: View {
                 Color.black
                 GrassIslandView(sessions: sessionStore.sortedSessions, selectedSessionId: sessionStore.selectedSessionId, hoveredSessionId: hoveredSessionId)
                     .frame(height: grassHeight, alignment: .bottom)
-                    .opacity(isExpanded && !showingPanelSettings && !showingClaudeSettings ? 1 : 0)
+                    .opacity(isExpanded && !showingPanelSettings && !showingClaudeSettings && !showingCodexSettings ? 1 : 0)
             }
         }
         .overlay(alignment: .top) {
-            if isExpanded && !showingPanelSettings && !showingClaudeSettings {
+            if isExpanded && !showingPanelSettings && !showingClaudeSettings && !showingCodexSettings {
                 GrassTapOverlay(
                     sessions: sessionStore.sortedSessions,
                     selectedSessionId: sessionStore.selectedSessionId,
@@ -108,7 +109,7 @@ struct NotchContentView: View {
             }
         }
         .overlay(alignment: .topTrailing) {
-            if isExpanded && !showingPanelSettings && !showingClaudeSettings {
+            if isExpanded && !showingPanelSettings && !showingClaudeSettings && !showingCodexSettings {
                 Button(action: {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                         isActivityCollapsed.toggle()
@@ -139,6 +140,7 @@ struct NotchContentView: View {
             if !expanded {
                 showingPanelSettings = false
                 showingClaudeSettings = false
+                showingCodexSettings = false
                 showingSessionActivity = false
                 hoveredSessionId = nil
             }
@@ -162,6 +164,7 @@ struct NotchContentView: View {
                         usageService: usageService,
                         showingSettings: $showingPanelSettings,
                         showingClaudeSettings: $showingClaudeSettings,
+                        showingCodexSettings: $showingCodexSettings,
                         showingSessionActivity: $showingSessionActivity,
                         isActivityCollapsed: $isActivityCollapsed
                     )
@@ -236,6 +239,9 @@ struct NotchContentView: View {
     private func goBack() {
         if showingClaudeSettings {
             showingClaudeSettings = false
+            showingPanelSettings = true
+        } else if showingCodexSettings {
+            showingCodexSettings = false
             showingPanelSettings = true
         } else if showingPanelSettings {
             showingPanelSettings = false

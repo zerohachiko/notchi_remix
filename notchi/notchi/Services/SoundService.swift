@@ -44,6 +44,22 @@ final class SoundService {
         play(sound)
     }
 
+    func playHookSound(source: AgentSource, eventType: String, hooks: [String], sessionId: String, isInteractive: Bool) {
+        guard isInteractive else { return }
+
+        if TerminalFocusDetector.isTerminalFocused() { return }
+
+        let sourceName = source == .claude ? "claude" : "codex"
+        for command in hooks {
+            let key = AppSettings.hookSoundKey(source: sourceName, eventType: eventType, command: command)
+            if let sound = AppSettings.hookSound(for: key), sound != .none {
+                play(sound)
+                logger.debug("Playing hook sound \(sound.rawValue, privacy: .public) for \(eventType, privacy: .public)")
+                return
+            }
+        }
+    }
+
     func clearCooldown(for sessionId: String) {
         lastSoundTimes.removeValue(forKey: sessionId)
     }

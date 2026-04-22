@@ -24,6 +24,7 @@ struct ExpandedPanelView: View {
     let usageService: ClaudeUsageService
     @Binding var showingSettings: Bool
     @Binding var showingClaudeSettings: Bool
+    @Binding var showingCodexSettings: Bool
     @Binding var showingSessionActivity: Bool
     @Binding var isActivityCollapsed: Bool
 
@@ -62,7 +63,7 @@ struct ExpandedPanelView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                if !showingSettings && !showingClaudeSettings {
+                if !showingSettings && !showingClaudeSettings && !showingCodexSettings {
                     if shouldShowSessionPicker {
                         sessionPickerContent(geometry: geometry)
                             .transition(.move(edge: .leading).combined(with: .opacity))
@@ -72,8 +73,11 @@ struct ExpandedPanelView: View {
                     }
                 }
 
-                if showingSettings && !showingClaudeSettings {
-                    PanelSettingsView(onOpenClaudeSettings: { showingClaudeSettings = true })
+                if showingSettings && !showingClaudeSettings && !showingCodexSettings {
+                    PanelSettingsView(
+                        onOpenClaudeSettings: { showingClaudeSettings = true },
+                        onOpenCodexSettings: { showingCodexSettings = true }
+                    )
                         .frame(width: geometry.size.width)
                         .transition(.move(edge: .trailing).combined(with: .opacity))
                 }
@@ -83,10 +87,17 @@ struct ExpandedPanelView: View {
                         .frame(width: geometry.size.width)
                         .transition(.move(edge: .trailing).combined(with: .opacity))
                 }
+
+                if showingCodexSettings {
+                    CodexSettingsView()
+                        .frame(width: geometry.size.width)
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                }
             }
         }
         .animation(.easeInOut(duration: 0.25), value: showingSettings)
         .animation(.easeInOut(duration: 0.25), value: showingClaudeSettings)
+        .animation(.easeInOut(duration: 0.25), value: showingCodexSettings)
         .animation(.easeInOut(duration: 0.25), value: shouldShowSessionPicker)
         .onChange(of: showingSettings) { _, isShowing in
             if !isShowing {

@@ -1,12 +1,12 @@
 import SwiftUI
 
-struct HooksSectionView: View {
-    var store: ClaudeSettingsStore
+struct CodexHooksSectionView: View {
+    var store: CodexSettingsStore
 
     @State private var addingEventType: String?
     @State private var newCommand = ""
 
-    private var sortedHooks: [(key: String, value: [HookEventConfig])] {
+    private var sortedHooks: [(key: String, value: [CodexHookEventConfig])] {
         (store.settings.hooks ?? [:]).sorted { $0.key < $1.key }
     }
 
@@ -16,12 +16,19 @@ struct HooksSectionView: View {
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundColor(TerminalColors.secondaryText)
 
+            if sortedHooks.isEmpty {
+                Text("No hooks configured")
+                    .font(.system(size: 11))
+                    .foregroundColor(TerminalColors.dimmedText)
+                    .padding(.vertical, 4)
+            }
+
             ForEach(sortedHooks, id: \.key) { eventType, configs in
                 DisclosureGroup {
                     VStack(alignment: .leading, spacing: 6) {
                         ForEach(Array(configs.enumerated()), id: \.offset) { ci, config in
                             ForEach(Array(config.hooks.enumerated()), id: \.offset) { hi, hook in
-                                HookEntryRow(
+                                CodexHookEntryRow(
                                     store: store,
                                     eventType: eventType,
                                     config: config,
@@ -89,24 +96,24 @@ struct HooksSectionView: View {
     private func commitAddHook(eventType: String) {
         let trimmed = newCommand.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        store.addHookEntry(eventType: eventType, entry: HookEntry(command: trimmed))
+        store.addHookEntry(eventType: eventType, entry: CodexHookEntry(command: trimmed))
         newCommand = ""
         addingEventType = nil
     }
 }
 
-private struct HookEntryRow: View {
-    var store: ClaudeSettingsStore
+private struct CodexHookEntryRow: View {
+    var store: CodexSettingsStore
     let eventType: String
-    let config: HookEventConfig
+    let config: CodexHookEventConfig
     let ci: Int
     let hi: Int
-    let hook: HookEntry
+    let hook: CodexHookEntry
 
     @State private var command: String = ""
 
     private var isNotchi: Bool {
-        command.contains("notchi-hook.sh")
+        command.contains("notchi-codex-hook.sh")
     }
 
     var body: some View {
@@ -121,10 +128,10 @@ private struct HookEntryRow: View {
                 .cornerRadius(6)
                 .onSubmit {
                     store.removeHookEntry(eventType: eventType, configIndex: ci, hookIndex: hi)
-                    store.addHookEntry(eventType: eventType, entry: HookEntry(command: command, timeout: hook.timeout), matcher: config.matcher)
+                    store.addHookEntry(eventType: eventType, entry: CodexHookEntry(command: command), matcher: config.matcher)
                 }
 
-            HookSoundPickerView(source: "claude", eventType: eventType, command: hook.command)
+            HookSoundPickerView(source: "codex", eventType: eventType, command: hook.command)
 
             if isNotchi {
                 Text("Notchi Remix")
@@ -134,12 +141,6 @@ private struct HookEntryRow: View {
                     .padding(.vertical, 1)
                     .background(TerminalColors.green.opacity(0.15))
                     .cornerRadius(3)
-            }
-
-            if let timeout = hook.timeout {
-                Text("timeout: \(timeout)")
-                    .font(.system(size: 9))
-                    .foregroundColor(TerminalColors.dimmedText)
             }
 
             if let matcher = config.matcher {

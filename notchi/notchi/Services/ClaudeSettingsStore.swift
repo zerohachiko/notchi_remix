@@ -17,7 +17,10 @@ final class ClaudeSettingsStore {
 
     private(set) var settings = ClaudeSettings()
     private(set) var saveStatus: SaveStatus = .idle
+    private(set) var isDirty = false
     private var rawJSON: [String: Any] = [:]
+    private var savedRawJSON: [String: Any] = [:]
+    private var savedSettings = ClaudeSettings()
     private var resetTask: Task<Void, Never>?
 
     private init() {}
@@ -29,6 +32,8 @@ final class ClaudeSettingsStore {
             logger.info("No settings file found at \(path, privacy: .public)")
             settings = ClaudeSettings()
             rawJSON = [:]
+            snapshotSavedState()
+            isDirty = false
             return
         }
 
@@ -45,6 +50,13 @@ final class ClaudeSettingsStore {
             settings = ClaudeSettings()
             rawJSON = [:]
         }
+        snapshotSavedState()
+        isDirty = false
+    }
+
+    private func snapshotSavedState() {
+        savedRawJSON = rawJSON
+        savedSettings = settings
     }
 
     func save() {
@@ -85,34 +97,47 @@ final class ClaudeSettingsStore {
         }
     }
 
+    func commitSave() {
+        save()
+        snapshotSavedState()
+        isDirty = false
+    }
+
+    func discardChanges() {
+        rawJSON = savedRawJSON
+        settings = savedSettings
+        isDirty = false
+        saveStatus = .idle
+    }
+
     func updateEnvVar(key: String, value: String) {
         if settings.env == nil { settings.env = [:] }
         settings.env?[key] = value
-        save()
+        isDirty = true
     }
 
     func addEnvVar(key: String, value: String) {
         if settings.env == nil { settings.env = [:] }
         settings.env?[key] = value
-        save()
+        isDirty = true
     }
 
     func removeEnvVar(key: String) {
         settings.env?.removeValue(forKey: key)
         if settings.env?.isEmpty == true { settings.env = nil }
-        save()
+        isDirty = true
     }
 
     func setPlugin(_ name: String, enabled: Bool) {
         if settings.enabledPlugins == nil { settings.enabledPlugins = [:] }
         settings.enabledPlugins?[name] = enabled
-        save()
+        isDirty = true
     }
 
     func removePlugin(_ name: String) {
         settings.enabledPlugins?.removeValue(forKey: name)
         if settings.enabledPlugins?.isEmpty == true { settings.enabledPlugins = nil }
-        save()
+        isDirty = true
     }
 
     func addHookEntry(eventType: String, entry: HookEntry, matcher: String? = nil) {
@@ -126,7 +151,7 @@ final class ClaudeSettingsStore {
             let config = HookEventConfig(matcher: effectiveMatcher, hooks: [entry])
             settings.hooks?[eventType]?.append(config)
         }
-        save()
+        isDirty = true
     }
 
     func removeHookEntry(eventType: String, configIndex: Int, hookIndex: Int) {
@@ -142,7 +167,7 @@ final class ClaudeSettingsStore {
         if settings.hooks?.values.allSatisfy({ $0 == nil }) == true || settings.hooks?.isEmpty == true {
             settings.hooks = nil
         }
-        save()
+        isDirty = true
     }
 
     func addPermission(type: String, value: String) {
@@ -159,7 +184,7 @@ final class ClaudeSettingsStore {
         default:
             break
         }
-        save()
+        isDirty = true
     }
 
     func removePermission(type: String, index: Int) {
@@ -176,28 +201,28 @@ final class ClaudeSettingsStore {
         if settings.permissions?.allow.isEmpty == true && settings.permissions?.deny.isEmpty == true {
             settings.permissions = nil
         }
-        save()
+        isDirty = true
     }
 
     func updateStatusLine(command: String) {
         settings.statusLine = StatusLineConfig(command: command)
-        save()
+        isDirty = true
     }
 
     func updateBasicSetting(_ keyPath: WritableKeyPath<ClaudeSettings, Bool?>, value: Bool) {
         settings[keyPath: keyPath] = value
-        save()
+        isDirty = true
     }
 
     func addMarketplace(name: String, repo: String, source: String) {
         if settings.extraKnownMarketplaces == nil { settings.extraKnownMarketplaces = [:] }
         settings.extraKnownMarketplaces?[name] = MarketplaceConfig(source: MarketplaceSource(repo: repo, source: source))
-        save()
+        isDirty = true
     }
 
     func removeMarketplace(name: String) {
         settings.extraKnownMarketplaces?.removeValue(forKey: name)
         if settings.extraKnownMarketplaces?.isEmpty == true { settings.extraKnownMarketplaces = nil }
-        save()
+        isDirty = true
     }
 }

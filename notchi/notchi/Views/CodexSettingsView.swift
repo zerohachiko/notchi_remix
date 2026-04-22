@@ -1,23 +1,17 @@
 import SwiftUI
 
-struct ClaudeSettingsView: View {
-    var store: ClaudeSettingsStore = .shared
+struct CodexSettingsView: View {
+    var store: CodexSettingsStore = .shared
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    basicSection
+                    CodexBasicSectionView(store: store)
                     Divider().background(Color.white.opacity(0.08))
-                    EnvSectionView(store: store)
+                    CodexToolsSectionView(store: store)
                     Divider().background(Color.white.opacity(0.08))
-                    PluginsSectionView(store: store)
-                    Divider().background(Color.white.opacity(0.08))
-                    HooksSectionView(store: store)
-                    Divider().background(Color.white.opacity(0.08))
-                    PermissionsSectionView(store: store)
-                    Divider().background(Color.white.opacity(0.08))
-                    MiscSectionView(store: store)
+                    CodexHooksSectionView(store: store)
                 }
                 .padding(.top, 10)
             }
@@ -33,24 +27,6 @@ struct ClaudeSettingsView: View {
         .padding(.top, 10)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .onAppear { store.load() }
-    }
-
-    private var basicSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Button(action: { store.updateBasicSetting(\.alwaysThinkingEnabled, value: !(store.settings.alwaysThinkingEnabled ?? false)) }) {
-                SettingsRowView(icon: "brain.head.profile", title: "Always Thinking") {
-                    ToggleSwitch(isOn: store.settings.alwaysThinkingEnabled ?? false)
-                }
-            }
-            .buttonStyle(.plain)
-
-            Button(action: { store.updateBasicSetting(\.rawUrl, value: !(store.settings.rawUrl ?? false)) }) {
-                SettingsRowView(icon: "link", title: "Raw URL") {
-                    ToggleSwitch(isOn: store.settings.rawUrl ?? false)
-                }
-            }
-            .buttonStyle(.plain)
-        }
     }
 
     @ViewBuilder

@@ -6,6 +6,32 @@ struct AppSettings {
     private static let previousSoundKey = "previousNotificationSound"
     private static let isUsageEnabledKey = "isUsageEnabled"
     private static let claudeUsageRecoverySnapshotKey = "claudeUsageRecoverySnapshot"
+    private static let hookSoundsKey = "hookSounds"
+
+    // MARK: - Per-hook sounds
+
+    static func hookSoundKey(source: String, eventType: String, command: String) -> String {
+        "\(source):\(eventType):\(command)"
+    }
+
+    static func hookSound(for key: String) -> NotificationSound? {
+        guard let dict = UserDefaults.standard.dictionary(forKey: hookSoundsKey) as? [String: String],
+              let rawValue = dict[key],
+              let sound = NotificationSound(rawValue: rawValue) else {
+            return nil
+        }
+        return sound
+    }
+
+    static func setHookSound(_ sound: NotificationSound?, for key: String) {
+        var dict = (UserDefaults.standard.dictionary(forKey: hookSoundsKey) as? [String: String]) ?? [:]
+        if let sound, sound != .none {
+            dict[key] = sound.rawValue
+        } else {
+            dict.removeValue(forKey: key)
+        }
+        UserDefaults.standard.set(dict, forKey: hookSoundsKey)
+    }
 
     static var isUsageEnabled: Bool {
         get { UserDefaults.standard.bool(forKey: isUsageEnabledKey) }
