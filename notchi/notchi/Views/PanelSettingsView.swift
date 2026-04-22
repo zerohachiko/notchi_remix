@@ -65,6 +65,8 @@ struct PanelSettingsView: View {
             ScreenPickerRow(screenSelector: ScreenSelector.shared)
 
             SoundPickerView()
+
+            WeatherDebugSection()
         }
     }
 
@@ -362,4 +364,94 @@ struct ToggleSwitch: View {
     PanelSettingsView()
         .frame(width: 402, height: 400)
         .background(Color.black)
+}
+
+// MARK: - Weather Debug Section
+
+struct WeatherDebugSection: View {
+    private var weatherService: WeatherService { .shared }
+    @State private var isDebugEnabled = WeatherService.shared.isDebugMode
+    @State private var selectedCondition: WeatherCondition = WeatherService.shared.condition
+    @State private var isNight: Bool = WeatherService.shared.isNight
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Button(action: toggleDebug) {
+                SettingsRowView(icon: "cloud.sun", title: "Weather Debug") {
+                    ToggleSwitch(isOn: isDebugEnabled)
+                }
+            }
+            .buttonStyle(.plain)
+
+            if isDebugEnabled {
+                VStack(alignment: .leading, spacing: 6) {
+                    // Weather condition picker
+                    HStack(spacing: 0) {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 4) {
+                                ForEach(WeatherCondition.allCases, id: \.rawValue) { condition in
+                                    weatherChip(condition)
+                                }
+                            }
+                            .padding(.horizontal, 4)
+                        }
+                    }
+
+                    // Day/Night toggle
+                    Button(action: toggleNight) {
+                        HStack(spacing: 6) {
+                            Image(systemName: isNight ? "moon.fill" : "sun.max.fill")
+                                .font(.system(size: 11))
+                                .foregroundColor(isNight ? TerminalColors.iMessageBlue : TerminalColors.amber)
+                            Text(isNight ? "Night" : "Day")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(TerminalColors.primaryText)
+                            Spacer()
+                            ToggleSwitch(isOn: isNight)
+                        }
+                        .padding(.vertical, 2)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.leading, 28)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: isDebugEnabled)
+    }
+
+    private func weatherChip(_ condition: WeatherCondition) -> some View {
+        let isSelected = selectedCondition == condition
+        return Button(action: {
+            selectedCondition = condition
+            applyOverride()
+        }) {
+            Text(condition.displayName)
+                .font(.system(size: 9, weight: isSelected ? .semibold : .regular))
+                .foregroundColor(isSelected ? .white : TerminalColors.secondaryText)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 4)
+                .background(isSelected ? TerminalColors.iMessageBlue.opacity(0.6) : Color.white.opacity(0.06))
+                .cornerRadius(6)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func toggleDebug() {
+        isDebugEnabled.toggle()
+        if isDebugEnabled {
+            applyOverride()
+        } else {
+            weatherService.clearDebugOverride()
+        }
+    }
+
+    private func toggleNight() {
+        isNight.toggle()
+        applyOverride()
+    }
+
+    private func applyOverride() {
+        weatherService.setDebugOverride(condition: selectedCondition, isNight: isNight)
+    }
 }

@@ -22,6 +22,8 @@ struct GrassIslandView: View {
     let sessions: [SessionData]
     var selectedSessionId: String?
     var hoveredSessionId: String?
+    var weatherCondition: WeatherCondition = .sunny
+    var isNight: Bool = false
 
     private let patchWidth: CGFloat = 80
 
@@ -39,6 +41,12 @@ struct GrassIslandView: View {
                 }
                 .frame(width: geometry.size.width, alignment: .leading)
                 .drawingGroup()
+
+                // Weather effects overlay
+                WeatherEffectView(condition: weatherCondition, isNight: isNight)
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .animation(.easeInOut(duration: 1.5), value: weatherCondition)
+                    .animation(.easeInOut(duration: 1.5), value: isNight)
 
                 if sessions.isEmpty {
                     GrassSpriteView(state: .idle, xPosition: 0.5, yOffset: -15, totalWidth: geometry.size.width, glowOpacity: 0)

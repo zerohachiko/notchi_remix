@@ -38,6 +38,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate, SP
         observeWakeNotifications()
         startHookServices()
         startUsageService()
+        startWeatherService()
         startUpdater()
     }
 
@@ -132,6 +133,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate, SP
 
     @MainActor private func startUsageService() {
         ClaudeUsageService.shared.startPolling()
+    }
+
+    @MainActor private func startWeatherService() {
+        WeatherService.shared.startPolling()
     }
 
     private func startUpdater() {

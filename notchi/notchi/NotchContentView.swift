@@ -18,6 +18,7 @@ struct NotchContentView: View {
     var stateMachine: NotchiStateMachine = .shared
     var panelManager: NotchPanelManager = .shared
     var usageService: ClaudeUsageService = .shared
+    var weatherService: WeatherService = .shared
     @ObservedObject private var updateManager = UpdateManager.shared
     @State private var showingPanelSettings = false
     @State private var showingClaudeSettings = false
@@ -88,7 +89,7 @@ struct NotchContentView: View {
         .background {
             ZStack(alignment: .top) {
                 Color.black
-                GrassIslandView(sessions: sessionStore.sortedSessions, selectedSessionId: sessionStore.selectedSessionId, hoveredSessionId: hoveredSessionId)
+                GrassIslandView(sessions: sessionStore.sortedSessions, selectedSessionId: sessionStore.selectedSessionId, hoveredSessionId: hoveredSessionId, weatherCondition: weatherService.condition, isNight: weatherService.isNight)
                     .frame(height: grassHeight, alignment: .bottom)
                     .opacity(isExpanded && !showingPanelSettings && !showingClaudeSettings && !showingCodexSettings ? 1 : 0)
             }

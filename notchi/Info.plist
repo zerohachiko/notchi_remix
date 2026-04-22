@@ -22,5 +22,9 @@
 	<string>ZfouVFLXx9vyEimCHW+JWgAtikAq19KsWbig7FkB2QA=</string>
 	<key>SUVerifyUpdateBeforeExtraction</key>
 	<true/>
+	<key>NSLocationUsageDescription</key>
+	<string>Notchi uses your location to show weather-based grass effects on the island background.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Notchi uses your location to show weather-based grass effects on the island background.</string>
 </dict>
 </plist>
