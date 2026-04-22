@@ -50,6 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, SPUUpdaterDelegate, SP
             }
         }
         ActiveSessionScanner.scanAndRestore()
+        ActiveSessionScanner.scanAndRestoreCodex()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
